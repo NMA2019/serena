@@ -18,9 +18,11 @@
 </head>
 
 <body>
+<!-- Sprite SVG : Définition de toutes les icônes -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-<symbol id="logo-serena" viewBox="0 0 200 200">
+    <!-- Logo SERENA -->
+    <symbol id="logo-serena" viewBox="0 0 200 200">
       <defs>
         <linearGradient id="lg-violet" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stop-color="#4A2B7A"/>
@@ -36,19 +38,23 @@
           <stop offset="100%" stop-color="#8FB886"/>
         </linearGradient>
       </defs>
-<path d="M100 25 A75 75 0 1 0 100 175 A75 75 0 0 0 165 120"
+      <path d="M100 25 A75 75 0 1 0 100 175 A75 75 0 0 0 165 120"
             fill="none" stroke="url(#lg-violet)" stroke-width="16" stroke-linecap="round"/>
-<path d="M100 55 A45 45 0 1 0 100 145"
+      <path d="M100 55 A45 45 0 1 0 100 145"
             fill="none" stroke="url(#lg-violet)" stroke-width="14" stroke-linecap="round"/>
-<path d="M100 175 A75 75 0 0 0 165 120"
+      <path d="M100 175 A75 75 0 0 0 165 120"
             fill="none" stroke="url(#lg-rose)" stroke-width="16" stroke-linecap="round"/>
-<path d="M55 105 Q45 75 70 65 Q85 95 65 115 Q58 112 55 105 Z"
+      <path d="M55 105 Q45 75 70 65 Q85 95 65 115 Q58 112 55 105 Z"
             fill="url(#lg-vert)"/>
     </symbol>
-<symbol id="logo-serena-compact" viewBox="0 0 200 200">
+
+    <!-- Logo compact -->
+    <symbol id="logo-serena-compact" viewBox="0 0 200 200">
       <use href="#logo-serena"/>
     </symbol>
-<symbol id="logo-serena-mono" viewBox="0 0 200 200">
+
+    <!-- Logo monochrome -->
+    <symbol id="logo-serena-mono" viewBox="0 0 200 200">
       <path d="M100 25 A75 75 0 1 0 100 175 A75 75 0 0 0 165 120"
             fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round"/>
       <path d="M100 55 A45 45 0 1 0 100 145"
@@ -58,7 +64,9 @@
       <path d="M55 105 Q45 75 70 65 Q85 95 65 115 Q58 112 55 105 Z"
             fill="currentColor"/>
     </symbol>
-<symbol id="ico-home" viewBox="0 0 24 24">
+
+    <!-- Icônes de navigation -->
+    <symbol id="ico-home" viewBox="0 0 24 24">
       <path d="M4 11l8-7 8 7v9a1 1 0 01-1 1h-4v-6H9v6H5a1 1 0 01-1-1z"
             fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
     </symbol>
@@ -96,8 +104,14 @@
     </symbol>
   </defs>
 </svg>
+
+<!-- Zone d'impression pour le rapport PDF -->
 <div id="print-report" aria-hidden="true"></div>
+
+<!-- Notifications Toast -->
 <div id="toastwrap" role="status" aria-live="polite" aria-atomic="false"></div>
+
+<!-- Écran de démarrage (Splash) -->
 <div id="screen-splash" class="center-screen">
   <svg class="logo-lg" aria-hidden="true"><use href="#logo-serena"/></svg>
   <h1 class="brand" style="font-size:28px;margin:6px 0 0;color:var(--primary);letter-spacing:.15em">SERENA</h1>
@@ -106,6 +120,8 @@
     <span class="active"></span><span></span><span></span>
   </div>
 </div>
+
+<!-- Écran de verrouillage (PIN) -->
 <div id="screen-lock" class="center-screen hidden">
   <svg width="56" height="56" aria-hidden="true" style="color:var(--primary)">
     <use href="#ico-lock"/>
@@ -118,14 +134,20 @@
     Utiliser la biométrie
   </button>
 </div>
+
+<!-- Écran d'onboarding -->
 <div id="screen-onboarding" class="center-screen hidden" style="justify-content:flex-start;padding-top:40px">
   <div class="onb-step" id="onbContent" style="width:100%"></div>
 </div>
+
+<!-- Application principale -->
 <div id="app" class="hidden">
-<nav class="sidebar" id="sidebar" aria-label="Navigation principale"></nav>
+  <!-- Navigation latérale (Desktop) -->
+  <nav class="sidebar" id="sidebar" aria-label="Navigation principale"></nav>
 
   <div class="content-col">
-<header class="topbar">
+    <!-- Barre supérieure (Mobile) -->
+    <header class="topbar">
       <div class="brand">
         <svg width="28" height="28" aria-hidden="true"><use href="#logo-serena-compact"/></svg>
         SERENA
@@ -138,17 +160,26 @@
         <svg width="22" height="22"><use href="#ico-settings"/></svg>
       </button>
     </header>
-<main id="mainView" role="main" aria-live="polite"></main>
+
+    <!-- Contenu principal -->
+    <main id="mainView" role="main" aria-live="polite"></main>
   </div>
-<nav class="tabbar" id="tabbar" aria-label="Navigation"></nav>
+
+  <!-- Barre d'onglets (Mobile) -->
+  <nav class="tabbar" id="tabbar" aria-label="Navigation"></nav>
 </div>
+
+<!-- Racine des modales -->
 <div id="modalRoot"></div>
+
+<!-- Badge hors-ligne -->
 <div id="offlineBadge" class="hidden" style="
   position:fixed; top:calc(8px + var(--safe-top)); left:50%; transform:translateX(-50%);
   background:var(--warn); color:#5A3A00; padding:4px 12px; border-radius:99px;
   font-size:12px; font-weight:600; z-index:100; box-shadow:var(--shadow-sm)">
   ⚠️ Hors-ligne — données locales uniquement
 </div>
+
 <script src="./app.js"></script>
 </body>
 </html>

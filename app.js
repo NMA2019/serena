@@ -2,9 +2,18 @@
 window.SERENA = window.SERENA || {};
 const S = window.SERENA;
 
+/* ============================================================
+   BLOC 1 : UTILITAIRES DOM & SÉCURITÉ
+   ============================================================ */
+
 S.$  = (sel, root) => (root || document).querySelector(sel);
 S.$$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
 
+/**
+ * Crée un élément DOM.
+ * ATTENTION : Ne pas passer de chaînes HTML dans `children`.
+ * Utilisez `innerHTML` après création pour insérer du HTML/SVG.
+ */
 S.el = function(tag, attrs, children){
   const node = document.createElement(tag);
   if(attrs){
@@ -24,6 +33,7 @@ S.el = function(tag, attrs, children){
     const arr = Array.isArray(children) ? children : [children];
     arr.forEach(c => {
       if(c == null || c === false) return;
+      // Si c'est un nœud DOM, on l'ajoute. Sinon on crée un texte.
       node.appendChild(typeof c === 'string' || typeof c === 'number'
         ? document.createTextNode(String(c))
         : c);
@@ -41,6 +51,10 @@ S.escapeHtml = function(str){
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 };
+
+/* ============================================================
+   BLOC 2 : DATES & I18N
+   ============================================================ */
 
 S.dt = {
   toISO(y, m, d){
@@ -110,7 +124,6 @@ S.dict = {
 fr: {
   tagline: "Comprendre son corps. Anticiper. Prendre soin de soi.",
   appName: "SERENA",
-
   lockTitle: "Application verrouillée",
   lockEnterPin: "Entrez votre code PIN",
   useBiometric: "Utiliser la biométrie",
@@ -123,7 +136,6 @@ fr: {
   createPin: "Créer un code PIN",
   pinChangeOk: "Code PIN modifié",
   pinCurrentWrong: "PIN actuel incorrect",
-
   onbWelcomeTitle: "Bienvenue sur SERENA",
   onbWelcomeBody: "SERENA vous aide à comprendre votre cycle, suivre votre corps et anticiper — sans jugement, sans diagnostic.",
   onbPrivacyTitle: "Vos données restent chez vous",
@@ -148,7 +160,6 @@ fr: {
   onbStart: "Commencer",
   onbFinish: "Terminer",
   onbWelcome: "Bienvenue sur SERENA ✨",
-
   navDashboard: "Accueil",
   navCalendar: "Calendrier",
   navTracking: "Suivi",
@@ -169,7 +180,6 @@ fr: {
   navHelp: "Aide",
   navContractions: "Contractions",
   navHealth: "Santé",
-
   greetingMorning: "Bonjour",
   greetingAfternoon: "Bon après-midi",
   greetingEvening: "Bonsoir",
@@ -191,7 +201,6 @@ fr: {
   phasePregnancy: "Grossesse",
   noDataYet: "Aucune donnée enregistrée",
   registerPeriods: "Enregistrez vos règles",
-
   qaPeriod: "Règles",
   qaJournal: "Journal",
   qaTemp: "Température",
@@ -199,7 +208,6 @@ fr: {
   qaSymptoms: "Symptômes",
   qaNote: "Note",
   qaSex: "Rapport",
-
   estimation: "Estimation",
   confidenceLow: "Confiance FAIBLE",
   confidenceMed: "Confiance MOYENNE",
@@ -208,7 +216,6 @@ fr: {
   regularNormal: "Régulier",
   regularIrregular: "Irrégulier",
   regularInsufficient: "Données insuffisantes",
-
   periods: "Règles",
   spotting: "Spotting",
   flow: "Flux",
@@ -225,7 +232,6 @@ fr: {
   cycleEvolution: "Évolution des cycles",
   cycleSummary: "Résumé du cycle",
   lastPeriod: "Dernières règles",
-
   mood: "Humeur",
   pain: "Douleur",
   energy: "Énergie",
@@ -239,7 +245,6 @@ fr: {
   journalEmpty: "Aucune entrée pour le moment",
   addEntry: "Ajouter l'entrée du jour",
   pregnancyJournal: "Journal grossesse",
-
   symCramps: "Crampes",
   symHeadache: "Maux de tête",
   symBreasts: "Seins sensibles",
@@ -250,9 +255,7 @@ fr: {
   symBack: "Dos",
   symDischarge: "Pertes",
   symOther: "Autre",
-
   mood1: "😢", mood2: "😕", mood3: "😐", mood4: "🙂", mood5: "😄",
-
   temperature: "Température basale",
   temperatureValue: "Valeur (°C)",
   temperatureHint: "Mesurez au réveil, avant tout effort, à la même heure chaque jour.",
@@ -266,13 +269,11 @@ fr: {
   temperatureNoRise: "Pas encore de hausse thermique nette ce cycle.",
   temperatureNeedMore: "Enregistrez 3+ températures",
   temperatureChart: "Courbe de température basale",
-
   fertilityWarning: "Les périodes fertiles affichées sont des estimations et ne constituent pas une méthode contraceptive.",
   ovulationNote: "Ovulation potentiellement détectée — jamais confirmée médicalement.",
   fertileToday: "Jour fertile",
   fertileNotToday: "Hors période fertile",
   fertileNext: "Prochaine : {date}",
-
   sexualWarning: "Le suivi des rapports ne permet pas à lui seul de déterminer le risque de grossesse.",
   protectedSex: "Protégé",
   unprotectedSex: "Non protégé",
@@ -280,7 +281,6 @@ fr: {
   contraceptionPlaceholder: "ex : préservatif, pilule",
   privateNote: "Note privée",
   logSex: "Enregistrer un rapport",
-
   implantWarning: "La date affichée est calculée à partir des informations enregistrées. Vérifiez la durée applicable à votre implant avec votre professionnel de santé.",
   implantActive: "Implant en cours",
   implantHistory: "Historique",
@@ -300,7 +300,6 @@ fr: {
   implantRemove: "Marquer comme retiré",
   implantEndDate: "Fin estimée",
   implantNoData: "Aucun implant enregistré",
-
   pregnancy: "Ma grossesse",
   pregnancyWeeks: "Semaine d'aménorrhée",
   pregnancyStart: "Démarrer un suivi",
@@ -324,7 +323,6 @@ fr: {
   daysLeft: "Il reste {n} jours",
   weeksAndDays: "{w} SA + {d}j",
   noPregnancy: "Aucune grossesse en cours",
-
   contractionStart: "DÉBUT",
   contractionEnd: "FIN",
   contractionSave: "Enregistrer une contraction",
@@ -332,7 +330,6 @@ fr: {
   contractionRecent: "Contractions récentes",
   contractionTimerNote: "Ce chronomètre ne diagnostique pas le travail.",
   contractionNoData: "Aucune contraction enregistrée",
-
   appointments: "Mes RDV",
   appointmentAdd: "Ajouter un RDV",
   appointmentLabel: "Libellé",
@@ -349,7 +346,6 @@ fr: {
   apptTypeFollowup: "Suivi grossesse",
   apptTypeImplant: "Implant",
   apptTypeOther: "Autre",
-
   reminders: "Rappels",
   reminderAdd: "Ajouter un rappel",
   reminderType: "Type",
@@ -367,7 +363,6 @@ fr: {
   reminderNotSupported: "Notifications non supportées",
   reminderPermissionDenied: "Permission refusée",
   reminderPermissionGranted: "Notifications activées 🔔",
-
   reports: "Rapports",
   exportPdf: "Exporter mon dossier (PDF)",
   exportData: "Exporter mes données",
@@ -381,7 +376,6 @@ fr: {
   importSuccess: "Import réussi",
   importInvalid: "Fichier invalide",
   importConfirm: "Fusionner avec les données existantes ?",
-
   settings: "Paramètres",
   appearance: "Apparence",
   language: "Langue",
@@ -439,7 +433,6 @@ fr: {
   fieldsRequired: "Champs requis",
   valueInvalid: "Valeur invalide",
   endBeforeStart: "La date de fin doit être après la date de début",
-
   seeWhenConsult: "Quand consulter un professionnel de santé ?",
   consultList: "Douleur intense ou inhabituelle • Saignement anormalement abondant • Fièvre • Malaise important • Symptômes inquiétants pendant la grossesse • Problème supposé lié à l'implant",
   medicalFooter: "SERENA est un outil de suivi personnel. Il ne remplace pas un avis médical.",
@@ -448,7 +441,6 @@ fr: {
   privacyExport: "Vous pouvez exporter vos données au format JSON à tout moment, ou tout supprimer définitivement depuis Paramètres → Données.",
   helpBody: "Naviguez via les onglets (bas sur mobile, gauche sur ordinateur). Le tableau de bord résume votre cycle et vos rappels. Le calendrier affiche vos règles, fenêtre fertile estimée et ovulation potentielle. Chaque module (température, journal, activité, implant, grossesse) permet d'ajouter et consulter vos données.",
   helpEstimates: "Toutes les estimations sont clairement identifiées comme telles et ne remplacent jamais un avis médical.",
-
   securityBody: "SERENA protège l'accès à vos données avec un code PIN à 4 chiffres, dérivé et haché avec PBKDF2 (Web Crypto API) — le PIN n'est jamais stocké en clair.",
   securityBiometric: "La biométrie (WebAuthn) est proposée en complément lorsque votre navigateur/appareil la supporte, avec le PIN comme solution de repli.",
   securityDataEncrypted: "Vos notes et données sensibles sont chiffrées au repos avec AES-GCM.",
@@ -456,7 +448,6 @@ fr: {
   onlineRestored: "Connexion rétablie",
   installApp: "Installer SERENA",
   installAppHint: "Ajoutez SERENA à votre écran d'accueil pour un accès rapide.",
-
   errIndexedDB: "IndexedDB indisponible — mode dégradé",
   errSave: "Erreur de sauvegarde",
   errLoad: "Erreur de chargement",
@@ -499,7 +490,6 @@ fr: {
 en: {
   tagline: "Understand your body. Anticipate. Take care of yourself.",
   appName: "SERENA",
-
   lockTitle: "App locked",
   lockEnterPin: "Enter your PIN code",
   useBiometric: "Use biometrics",
@@ -512,7 +502,6 @@ en: {
   createPin: "Create a PIN",
   pinChangeOk: "PIN changed",
   pinCurrentWrong: "Current PIN incorrect",
-
   onbWelcomeTitle: "Welcome to SERENA",
   onbWelcomeBody: "SERENA helps you understand your cycle, track your body and plan ahead — no judgment, no diagnosis.",
   onbPrivacyTitle: "Your data stays with you",
@@ -537,7 +526,6 @@ en: {
   onbStart: "Get started",
   onbFinish: "Finish",
   onbWelcome: "Welcome to SERENA ✨",
-
   navDashboard: "Home",
   navCalendar: "Calendar",
   navTracking: "Tracking",
@@ -558,7 +546,6 @@ en: {
   navHelp: "Help",
   navContractions: "Contractions",
   navHealth: "Health",
-
   greetingMorning: "Good morning",
   greetingAfternoon: "Good afternoon",
   greetingEvening: "Good evening",
@@ -580,7 +567,6 @@ en: {
   phasePregnancy: "Pregnancy",
   noDataYet: "No data recorded",
   registerPeriods: "Log your periods",
-
   qaPeriod: "Period",
   qaJournal: "Journal",
   qaTemp: "Temperature",
@@ -588,7 +574,6 @@ en: {
   qaSymptoms: "Symptoms",
   qaNote: "Note",
   qaSex: "Intercourse",
-
   estimation: "Estimate",
   confidenceLow: "LOW confidence",
   confidenceMed: "MEDIUM confidence",
@@ -597,7 +582,6 @@ en: {
   regularNormal: "Regular",
   regularIrregular: "Irregular",
   regularInsufficient: "Insufficient data",
-
   periods: "Periods",
   spotting: "Spotting",
   flow: "Flow",
@@ -614,7 +598,6 @@ en: {
   cycleEvolution: "Cycle evolution",
   cycleSummary: "Cycle summary",
   lastPeriod: "Last period",
-
   mood: "Mood",
   pain: "Pain",
   energy: "Energy",
@@ -628,7 +611,6 @@ en: {
   journalEmpty: "No entry yet",
   addEntry: "Add today's entry",
   pregnancyJournal: "Pregnancy journal",
-
   symCramps: "Cramps",
   symHeadache: "Headache",
   symBreasts: "Tender breasts",
@@ -639,9 +621,7 @@ en: {
   symBack: "Back pain",
   symDischarge: "Discharge",
   symOther: "Other",
-
   mood1: "😢", mood2: "😕", mood3: "😐", mood4: "🙂", mood5: "😄",
-
   temperature: "Basal temperature",
   temperatureValue: "Value (°C)",
   temperatureHint: "Measure on waking, before any effort, at the same time every day.",
@@ -655,13 +635,11 @@ en: {
   temperatureNoRise: "No clear thermal rise yet this cycle.",
   temperatureNeedMore: "Log 3+ temperatures",
   temperatureChart: "Basal temperature chart",
-
   fertilityWarning: "Fertile windows shown are estimates and are not a contraceptive method.",
   ovulationNote: "Ovulation potentially detected — never medically confirmed.",
   fertileToday: "Fertile day",
   fertileNotToday: "Outside fertile window",
   fertileNext: "Next: {date}",
-
   sexualWarning: "Tracking intercourse alone cannot determine pregnancy risk.",
   protectedSex: "Protected",
   unprotectedSex: "Unprotected",
@@ -669,7 +647,6 @@ en: {
   contraceptionPlaceholder: "e.g. condom, pill",
   privateNote: "Private note",
   logSex: "Log intercourse",
-
   implantWarning: "The date shown is calculated from the information you entered. Check the duration for your implant with your healthcare professional.",
   implantActive: "Active implant",
   implantHistory: "History",
@@ -689,7 +666,6 @@ en: {
   implantRemove: "Mark as removed",
   implantEndDate: "Estimated end",
   implantNoData: "No implant recorded",
-
   pregnancy: "My pregnancy",
   pregnancyWeeks: "Weeks of amenorrhea",
   pregnancyStart: "Start tracking",
@@ -713,7 +689,6 @@ en: {
   daysLeft: "{n} days left",
   weeksAndDays: "{w} WA + {d}d",
   noPregnancy: "No ongoing pregnancy",
-
   contractionStart: "START",
   contractionEnd: "STOP",
   contractionSave: "Log a contraction",
@@ -721,7 +696,6 @@ en: {
   contractionRecent: "Recent contractions",
   contractionTimerNote: "This timer does not diagnose labor.",
   contractionNoData: "No contraction recorded",
-
   appointments: "My appointments",
   appointmentAdd: "Add appointment",
   appointmentLabel: "Label",
@@ -738,7 +712,6 @@ en: {
   apptTypeFollowup: "Pregnancy follow-up",
   apptTypeImplant: "Implant",
   apptTypeOther: "Other",
-
   reminders: "Reminders",
   reminderAdd: "Add reminder",
   reminderType: "Type",
@@ -756,7 +729,6 @@ en: {
   reminderNotSupported: "Notifications not supported",
   reminderPermissionDenied: "Permission denied",
   reminderPermissionGranted: "Notifications enabled 🔔",
-
   reports: "Reports",
   exportPdf: "Export my record (PDF)",
   exportData: "Export my data",
@@ -770,7 +742,6 @@ en: {
   importSuccess: "Import successful",
   importInvalid: "Invalid file",
   importConfirm: "Merge with existing data?",
-
   settings: "Settings",
   appearance: "Appearance",
   language: "Language",
@@ -828,7 +799,6 @@ en: {
   fieldsRequired: "Required fields",
   valueInvalid: "Invalid value",
   endBeforeStart: "End date must be after start date",
-
   seeWhenConsult: "When to see a healthcare professional?",
   consultList: "Severe or unusual pain • Abnormally heavy bleeding • Fever • Significant discomfort • Worrying pregnancy symptoms • Suspected implant issue",
   medicalFooter: "SERENA is a personal tracking tool. It does not replace medical advice.",
@@ -837,7 +807,6 @@ en: {
   privacyExport: "You can export your data as JSON at any time, or permanently delete everything from Settings → Data.",
   helpBody: "Navigate with the tabs (bottom on mobile, left on desktop). The dashboard summarizes your cycle and reminders. The calendar shows periods, estimated fertile window and potential ovulation. Each module (temperature, journal, activity, implant, pregnancy) lets you add and review data.",
   helpEstimates: "All estimates are clearly labeled as such and never replace medical advice.",
-
   securityBody: "SERENA protects access to your data with a 4-digit PIN, derived and hashed with PBKDF2 (Web Crypto API) — the PIN is never stored in plain text.",
   securityBiometric: "Biometrics (WebAuthn) are offered as a complement when your browser/device supports it, with the PIN as a fallback.",
   securityDataEncrypted: "Your notes and sensitive data are encrypted at rest with AES-GCM.",
@@ -845,7 +814,6 @@ en: {
   onlineRestored: "Connection restored",
   installApp: "Install SERENA",
   installAppHint: "Add SERENA to your home screen for quick access.",
-
   errIndexedDB: "IndexedDB unavailable — degraded mode",
   errSave: "Save error",
   errLoad: "Load error",
@@ -915,6 +883,10 @@ S.applyI18n = function(root){
   document.documentElement.lang = S.lang;
 };
 
+/* ============================================================
+   BLOC 3 : CRYPTO & STOCKAGE
+   ============================================================ */
+
 S.crypto = {
   b64encode(bytes){
     return btoa(String.fromCharCode(...new Uint8Array(bytes)));
@@ -922,7 +894,6 @@ S.crypto = {
   b64decode(str){
     return Uint8Array.from(atob(str), c => c.charCodeAt(0));
   },
-
   async hashPin(pin, saltB64){
     const enc = new TextEncoder();
     let salt;
@@ -941,14 +912,12 @@ S.crypto = {
       salt: this.b64encode(salt)
     };
   },
-
   async verifyPin(pin, storedHash, storedSalt){
     try{
       const { hash } = await this.hashPin(pin, storedSalt);
       return hash === storedHash;
     }catch(e){ return false; }
   },
-
   async deriveAesKey(pin, saltB64){
     const enc = new TextEncoder();
     const salt = saltB64 ? this.b64decode(saltB64) : crypto.getRandomValues(new Uint8Array(16));
@@ -963,7 +932,6 @@ S.crypto = {
     );
     return { key, salt: this.b64encode(salt) };
   },
-
   async encrypt(key, plaintext){
     const enc = new TextEncoder();
     const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -976,7 +944,6 @@ S.crypto = {
       ct: this.b64encode(ciphertext)
     };
   },
-
   async decrypt(key, ivB64, ctB64){
     const dec = new TextDecoder();
     const iv = this.b64decode(ivB64);
@@ -990,7 +957,7 @@ S.crypto = {
 };
 
 S.DB_NAME = 'SERENA_DB';
-S.DB_VERSION = 2; // v2 = V1.2
+S.DB_VERSION = 2;
 S.STORES = [
   'profile', 'periods', 'dailyLogs', 'temperatures',
   'sexualActivity', 'implant', 'pregnancy', 'appointments',
@@ -1164,9 +1131,9 @@ S.state = {
   temperatures: [],
   sexualActivity: [],
   implant: null,
-  implants: [],       // historique
+  implants: [],
   pregnancy: null,
-  pregnancies: [],    // historique
+  pregnancies: [],
   appointments: [],
   reminders: [],
   contractions: [],
@@ -1180,11 +1147,11 @@ S.state = {
     notifications: false,
     demoLoaded: false
   },
-  security: null,     // { pinHash, pinSalt, aesSalt, autoLockMinutes, webauthnCredId }
+  security: null,
   route: 'dashboard',
   routeParam: null,
   isPregnant: false,
-  aesKey: null,       // clé AES en mémoire (jamais persistée)
+  aesKey: null,
   unlocked: false
 };
 
@@ -1235,27 +1202,22 @@ S.reloadAll = async function(){
   S.state.dailyLogs = dailyLogs;
   S.state.temperatures = temperatures;
   S.state.sexualActivity = sexualActivity;
-
   S.state.implants = implantArr;
   S.state.implant = implantArr
     .filter(i => !i.retire)
     .sort((a,b) => S.dt.toSerial(b.insertionDate) - S.dt.toSerial(a.insertionDate))[0] || null;
-
   S.state.pregnancies = pregnancyArr;
   S.state.pregnancy = pregnancyArr.find(p => p.active) || null;
-
   S.state.appointments = appointments;
   S.state.reminders = reminders;
   S.state.contractions = contractions;
-
   if(settingsArr[0]) Object.assign(S.state.settings, settingsArr[0]);
-
   S.state.security = securityArr[0] || null;
   S.state.isPregnant = !!(S.state.pregnancy && S.state.pregnancy.active);
 };
 
 S.persistFallback = function(){
-  if(S.dbAvailable) return; // IndexedDB gère
+  if(S.dbAvailable) return;
   S.lsSave({
     profile: S.state.profile,
     periods: S.state.periods,
@@ -1299,19 +1261,23 @@ S.storageInfo = async function(){
   return info;
 };
 
+/* ============================================================
+   BLOC 4 : ALGORITHMES MÉTIER (CALCULS)
+   ============================================================ */
+
 S.calc = {};
 
 S.calc.DEFAULTS = {
   CYCLE_LENGTH: 28,
   PERIOD_LENGTH: 5,
   LUTEAL_PHASE: 14,
-  FERTILE_BEFORE_OVU: 5,   // jours avant ovulation
-  FERTILE_AFTER_OVU: 1,    // jours après ovulation
+  FERTILE_BEFORE_OVU: 5,
+  FERTILE_AFTER_OVU: 1,
   MIN_CYCLE: 15,
   MAX_CYCLE: 60,
   MIN_PERIOD: 1,
   MAX_PERIOD: 10,
-  TEMP_RISE_THRESHOLD: 0.2, // °C (seuil de hausse thermique)
+  TEMP_RISE_THRESHOLD: 0.2,
   TEMP_UNIT: 'C'
 };
 
@@ -1412,7 +1378,7 @@ S.calc.predictNextPeriod = function(periods, cycleLength){
   while(S.dt.toSerial(nextDate) < S.dt.toSerial(today)){
     cyclesElapsed++;
     nextDate = S.dt.addDays(lastStart, (cyclesElapsed + 1) * len);
-    if(cyclesElapsed > 120) break; // sécurité anti-boucle
+    if(cyclesElapsed > 120) break;
   }
 
   const isLate = daysSinceLast > len && cyclesElapsed === 0;
@@ -1813,6 +1779,10 @@ S.calc.bmi = function(weightKg, heightCm){
   return { value: Math.round(bmi * 10) / 10, category };
 };
 
+/* ============================================================
+   BLOC 5 : UI (VUES, ROUTER, MODALES, CHARTS)
+   ============================================================ */
+
 S.ICONS = {
   home:     'ico-home',
   calendar: 'ico-calendar',
@@ -1883,30 +1853,35 @@ S.buildNav = function(){
   const side = S.$('#sidebar');
   if(!tab || !side) return;
 
+  // Construction de la barre d'onglets (Mobile)
   tab.innerHTML = '';
   S.NAV_MOBILE.forEach(item => {
     const b = S.el('button', {
       type: 'button',
       'data-route': item.route,
       'aria-label': S.t(item.label)
-    }, [
-      S.el('span', { style: { display: 'inline-flex' } }, S.svgIcon(item.icon, 22)),
-      S.el('span', {}, S.t(item.label))
-    ]);
+    });
+    // CORRECTION : Utilisation de innerHTML pour injecter le SVG
+    b.innerHTML = `
+      <span style="display:inline-flex">${S.svgIcon(item.icon, 22)}</span>
+      <span>${S.escapeHtml(S.t(item.label))}</span>
+    `;
     b.addEventListener('click', () => S.navigate(item.route));
     tab.appendChild(b);
   });
 
+  // Construction du menu latéral (Desktop)
   side.innerHTML = '';
   const brand = S.el('div', {
     style: { fontWeight: '700', fontSize: '18px', padding: '8px 12px 16px',
              color: 'var(--primary)', letterSpacing: '.1em',
              display: 'flex', alignItems: 'center', gap: '8px' }
-  }, [
-    S.el('span', { style: { display: 'inline-flex' } },
-      `<svg width="26" height="26" aria-hidden="true"><use href="#logo-serena-compact"/></svg>`),
-    'SERENA'
-  ]);
+  });
+  // CORRECTION : Utilisation de innerHTML pour injecter le SVG
+  brand.innerHTML = `
+    <svg width="26" height="26" aria-hidden="true"><use href="#logo-serena-compact"/></svg>
+    SERENA
+  `;
   side.appendChild(brand);
 
   S.NAV_SIDEBAR.forEach(item => {
@@ -3418,6 +3393,10 @@ S.bindHashRouter = function(){
   applyHash();
 };
 
+/* ============================================================
+   BLOC 6 : FORMULAIRES & MODULES
+   ============================================================ */
+
 S.SYMPTOMS = ['cramps', 'headache', 'breasts', 'bloating', 'fatigue', 'nausea', 'acne', 'back', 'discharge', 'other'];
 
 S.APPT_TYPES = ['consultation', 'ultrasound', 'exam', 'followup', 'implant', 'other'];
@@ -4243,8 +4222,8 @@ S.runSelfTests = async function(){
     const periods = [{ startDate: S.dt.addDays(S.dt.todayISO(), -14) }];
     const fw = S.calc.estimateFertileWindow(periods, 28, 14);
     const ovu = S.calc.estimateOvulation(periods, 28, 14);
-    const startDiff = S.dt.diffDays(ovu.date, fw.start);   // -5 attendu
-    const endDiff = S.dt.diffDays(ovu.date, fw.end);       // +1 attendu
+    const startDiff = S.dt.diffDays(ovu.date, fw.start);
+    const endDiff = S.dt.diffDays(ovu.date, fw.end);
     tests.push({ name: 'fenêtre fertile (J-19 → J-13)', ok: startDiff === -5 && endDiff === 1 });
   }catch(e){ tests.push({ name: 'fenêtre fertile', ok: false, error: e.message }); }
 
@@ -4347,7 +4326,7 @@ S.importJSON = function(data){
         if(!Array.isArray(data[store])) continue;
         for(const item of data[store]){
           const copy = { ...item };
-          delete copy.id; // autoIncrement
+          delete copy.id;
           if(S.dbAvailable) await S.dbAdd(store, copy);
           else{
             if(store === 'profile') S.state.profile = copy;
@@ -4792,7 +4771,7 @@ S.bindOnlineStatus = function(){
 
 S.pin = {
   buffer: '',
-  mode: 'verify',      // 'verify' | 'setup-first' | 'setup-confirm' | 'change'
+  mode: 'verify',
   firstEntry: null,
   failCount: 0,
   lockUntil: 0
@@ -5229,6 +5208,10 @@ S.showApp = async function(){
   }
 };
 
+/* ============================================================
+   BLOC 7 : BOOT
+   ============================================================ */
+
 S.boot = async function(){
   S.buildNav();
 
@@ -5272,7 +5255,7 @@ S.boot = async function(){
     } else {
       S.showLockVerify();
     }
-  }, 1200);
+  }, 1800);
 
   S.setupPWA();
 
