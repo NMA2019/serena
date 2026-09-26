@@ -2,11 +2,19 @@
 
 Toutes les modifications notables de SERENA sont documentées dans ce fichier.
 
-Le format suit [Keep a Changelog]([https://keepachangelog.com/fr/1.1.0/](https://keepachangelog.com/fr/1.1.0/)) et
+Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et
 
-le projet adhère au [Semantic Versioning]([https://semver.org/lang/fr/](https://semver.org/lang/fr/)).
+le projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ---
+
+## [Unreleased]
+
+### Corrigé
+
+- La page `serena.html` utilise le manifeste et le service worker statiques du dépôt.
+- Les chemins du manifeste, du cache hors-ligne et des icônes correspondent aux fichiers présents.
+- Les icônes PWA utilisent les PNG de `assets/`.
 
 ## [1.2.0] — 2026-09-26
 
@@ -198,9 +206,11 @@ le projet adhère au [Semantic Versioning]([https://semver.org/lang/fr/](https:/
 
 ### Limitations connues
 
-- **PWA non installable** : Service Worker via Blob URL refusé par tous
+- **PWA de la version 1.2.0** : le Service Worker via Blob URL était refusé par
 
-  les navigateurs modernes. Solution prévue en V1.3 (fichiers séparés).
+  les navigateurs modernes. Cette limitation est corrigée dans la section
+
+  [Unreleased] avec `sw.js` et `manifest.json` statiques.
 
 - **WebAuthn partiel** : aucun credential n'est enregistré automatiquement.
 
@@ -352,6 +362,6 @@ La version de schéma des exports JSON est exposée via `S.SCHEMA_VERSION`.
 
 ## Liens
 
-- [[README.md](http://README.md)]([README.md](http://README.md)) — Documentation principale
+- [README.md](README.md) — Documentation principale
 
-- [[LICENCE.md](http://LICENCE.md)]([LICENCE.md](http://LICENCE.md)) — Licence
+- [LICENCE.md](LICENCE.md) — Licence

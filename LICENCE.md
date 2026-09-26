@@ -25,7 +25,7 @@ copiée, modifiée et distribuée.
 
 ## 1. Définitions
 
-- **« Logiciel »** : le fichier `index.html` de SERENA, sa documentation
+- **« Logiciel »** : le fichier `serena.html` de SERENA, sa documentation
 (`README.md`, `CHANGELOG.md`, `LICENCE.md`) et l'ensemble des ressources
 graphiques et textuelles associées (logo, icônes, traductions).
 - **« Utilisatrice »** : toute personne physique qui utilise le Logiciel pour

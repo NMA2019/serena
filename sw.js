@@ -3,19 +3,19 @@
    Stratégie : cache-first pour les assets, network-first pour le reste
    ============================================================ */
 
-   const CACHE_NAME = 'serena-v1.2.0';
-   const CACHE_VERSION = 1;
+   const CACHE_NAME = 'serena-v1.2.1';
+   const CACHE_VERSION = 2;
    
    /* Ressources à précacher (App Shell) */
    const PRECACHE_URLS = [
-     './',
-     './index.html',
-     './manifest.json',
-     './assets/logo.svg',
-     './assets/icon-192.png',
-     './assets/icon-512.png',
-     './assets/icon-512-maskable.png'
-   ];
+  './serena.html',
+  './manifest.json',
+  './assets/favicon.ico',
+  './assets/favicon-96x96.png',
+  './assets/apple-touch-icon.png',
+  './assets/web-app-manifest-192x192.png',
+  './assets/web-app-manifest-512x512.png'
+];
    
    /* Durée de vie maximale du cache (en ms) — 30 jours */
    const CACHE_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
@@ -80,7 +80,7 @@
      /* --- Stratégie 1 : App Shell (HTML, manifest, icônes) → cache-first --- */
      const isAppShell =
        url.pathname.endsWith('/') ||
-       url.pathname.endsWith('/index.html') ||
+       url.pathname.endsWith('/serena.html') ||
        url.pathname.endsWith('/manifest.json') ||
        url.pathname.match(/\.(svg|png|ico|webp|jpg|jpeg)$/i);
    
@@ -121,7 +121,7 @@
        /* Réseau indisponible : sert le cache même expiré, ou fallback index */
        if (cached) return cached;
        if (request.mode === 'navigate') {
-         const fallback = await cache.match('./index.html');
+         const fallback = await cache.match('./serena.html');
          if (fallback) return fallback;
        }
        return new Response('Hors-ligne', {
@@ -230,7 +230,7 @@
    self.addEventListener('notificationclick', (event) => {
      event.notification.close();
    
-     const targetUrl = (event.notification.data && event.notification.data.url) || './index.html';
+     const targetUrl = (event.notification.data && event.notification.data.url) || './serena.html';
    
      event.waitUntil(
        self.clients.matchAll({ type: 'window', includeUncontrolled: true })

@@ -133,13 +133,14 @@ L'export JSON ne contient **pas** le PIN ni le hash du PIN.
 
 ## Installation
 
-### Option 1 — Utilisation directe
+### Option 1 — Serveur local (recommandé)
 
-1. Télécharger `serena.html`
-2. L'ouvrir dans un navigateur moderne (double-clic)
-3. C'est tout.
+Télécharger le dossier du projet, puis le servir en HTTP. L'ouverture en
+`file://` peut afficher la page, mais les navigateurs bloquent alors le
+manifeste et le Service Worker. Les données restent stockées localement dans
+le navigateur.
 
-### Option 2 — Serveur local (recommandé pour la PWA)
+### Option 2 — Serveur local
 
 ```bash
 # Python 3
@@ -152,7 +153,9 @@ npx serve
 php -S localhost:8000
 ```
 
-Puis ouvrir <http://localhost:8000/serena.html>.
+Avec XAMPP, démarrer Apache puis ouvrir
+<http://localhost/serena/serena.html>. Avec les autres serveurs, ouvrir
+<http://localhost:8000/serena.html>.
 
 ### Option 3 — Hébergement statique
 
@@ -219,11 +222,11 @@ dates cohérentes, températures 34–42 °C, PIN 4 chiffres, bornes physiologiq
 
 | Sujet | Choix | Justification |
 |---|---|---|
-| **Distribution** | Mono-fichier `serena.html` | Portabilité, offline-first, aucun build |
+| **Distribution** | Application mono-fichier `serena.html`, accompagnée du manifeste, du service worker et des icônes | Portabilité, aucun build |
 | **Dépendances** | Aucune | Zéro CDN, zéro framework, zéro tracking |
 | **Stockage** | IndexedDB (+ fallback localStorage) | Structuré, scalable, transactionnel |
 | **PIN** | PBKDF2 150k itérations + sel 16 octets | Standard OWASP 2023 |
-| **Chiffrement** | AES-GCM 256 bits (dérivé du PIN) | Chiffrement authentifié |
+| **Chiffrement** | AES-GCM 256 bits disponible; notes pas encore chiffrées | Chiffrement authentifié prévu pour les champs sensibles |
 | **PDF** | `window.print()` + CSS print | Pas de dépendance externe |
 | **Dates** | Serial UTC (jours depuis epoch) | Zéro dérive de fuseau |
 | **XSS** | `escapeHtml()` systématique | Protection de toutes les injections |
@@ -242,7 +245,7 @@ Le code est organisé en **7 blocs logiques** dans le même `<script>` :
 | 6 | Modules : formulaires, exports, PWA | ~500 |
 | 7 | Boot, PIN, onboarding, auto-lock | ~80 |
 
-**Total : ~2 800 lignes.**
+**Total : environ 5 800 lignes dans la version assemblée actuelle.**
 
 ### Namespace global
 
@@ -273,7 +276,8 @@ S.boot                           // Démarrage
 serena.html
 ├── <head>
 │   ├── <meta> (SEO, PWA, theme-color)
-│   ├── <link rel="icon"> (SVG data-URI)
+│   ├── <link rel="icon"> (icônes dans assets/)
+│   ├── <link rel="manifest"> (manifest.json)
 │   └── <style> (design tokens + composants)
 ├── <body>
 │   ├── <svg> sprite (logo + icônes)
@@ -368,15 +372,11 @@ Le fichier `serena.html` est assemblé à partir de 7 blocs. Pour modifier :
 
 ### PWA
 
-Le Service Worker est enregistré via une **Blob URL**, technique refusée par
-tous les navigateurs modernes. Conséquences :
-
-- ❌ Pas de cache offline avancé
-- ❌ Pas d'installabilité (Chrome, Edge)
-- ✅ L'app reste utilisable offline (données locales)
-
-**Solution** : servir `sw.js` et `manifest.json` en fichiers séparés depuis un
-serveur HTTPS (prévu en V1.3).
+`serena.html` référence `manifest.json` et enregistre `sw.js` depuis le même
+répertoire. Le service worker met en cache la page, le manifeste et les icônes.
+Il nécessite un contexte sécurisé : HTTPS en production ou `localhost` en
+local. L'ouverture via `file://` ne permet pas au navigateur de charger ces
+ressources PWA.
 
 ### WebAuthn
 
@@ -404,7 +404,6 @@ Les rappels utilisent l'API `Notification` du navigateur :
 - Pas de synchronisation multi-appareils (par choix : local-first)
 - Pas de mode "post-partum" (retour de couches, allaitement)
 - Pas de suivi de la glaire cervicale (méthode symptothermique complète)
-- Icône PWA en SVG data-URI (Chrome préfère PNG 192 et 512)
 
 ---
 
@@ -412,9 +411,8 @@ Les rappels utilisent l'API `Notification` du navigateur :
 
 ### V1.3 (prévu)
 
-- [ ] PWA réelle : `sw.js` + `manifest.json` en fichiers séparés
+- [ ] Améliorer et vérifier les stratégies PWA hors-ligne sur les navigateurs ciblés
 - [ ] Chiffrement AES-GCM des notes au repos
-- [ ] Icônes PNG 192 / 512 générées depuis le SVG
 - [ ] WebAuthn complet (enregistrement + vérification)
 - [ ] Tests unitaires (mini-framework maison)
 - [ ] Mode post-partum

@@ -49,7 +49,6 @@ Objet : [SECURITY] SERENA — Description courte
 +237 679 449 165
 Préciser : [SECURITY] SERENA
 
-text
 
 **Option 3 — GitHub Security Advisory**
 Si le dépôt le supporte, utiliser l'onglet "Security" → "Report a vulnerability".
@@ -134,7 +133,7 @@ réponse sous 7 jours, relancez par un autre canal.
 - ❌ Ingénierie sociale (phishing, manipulation)
 - ❌ Attaques par force brute sur PIN 4 chiffres (limitation connue)
 - ❌ Absence de chiffrement au repos (limitation documentée)
-- ❌ PWA non installable (limitation technique, pas une vulnérabilité)
+- ⚠️ Ouverture en `file://` : le navigateur bloque le manifeste et le Service Worker (utiliser HTTPS ou `localhost`)
 - ❌ WebAuthn partiel (limitation documentée)
 
 ---
@@ -173,11 +172,13 @@ IndexedDB sont en clair.
 
 **Prévu en V1.3** : chiffrement des champs `notes` et `sexualActivity.notes`.
 
-#### Service Worker via Blob URL
+#### Service Worker et contexte sécurisé
 
-Technique refusée par les navigateurs modernes. Conséquence : pas de cache
-offline avancé, pas d'installabilité PWA. **Ce n'est pas une vulnérabilité**,
-juste une limitation technique.
+SERENA enregistre le fichier `sw.js` et référence `manifest.json` depuis son
+répertoire. Le navigateur n'autorise ces fonctions que depuis HTTPS ou
+`localhost`. Une ouverture directe en `file://` bloque le manifeste et le
+Service Worker. Cette restriction est imposée par le navigateur et ne constitue
+pas une vulnérabilité de SERENA.
 
 #### WebAuthn partiel
 
