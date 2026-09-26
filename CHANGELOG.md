@@ -10,6 +10,11 @@ le projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ## [Unreleased]
 
+### Modifié
+
+- Découpage et modularisation de `serena.html` : extraction des styles vers `styles.css` et de la logique applicative vers `app.js`.
+- Mise à jour du Service Worker `sw.js` (cache `serena-v1.2.2`, version 3) pour pré-cacher `styles.css` et `app.js` dans l'App Shell offline.
+
 ### Corrigé
 
 - La page `serena.html` utilise le manifeste et le service worker statiques du dépôt.

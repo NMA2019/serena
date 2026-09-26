@@ -3,12 +3,14 @@
    Stratégie : cache-first pour les assets, network-first pour le reste
    ============================================================ */
 
-   const CACHE_NAME = 'serena-v1.2.1';
-   const CACHE_VERSION = 2;
+   const CACHE_NAME = 'serena-v1.2.2';
+   const CACHE_VERSION = 3;
    
    /* Ressources à précacher (App Shell) */
    const PRECACHE_URLS = [
   './serena.html',
+  './styles.css',
+  './app.js',
   './manifest.json',
   './assets/favicon.ico',
   './assets/favicon-96x96.png',
