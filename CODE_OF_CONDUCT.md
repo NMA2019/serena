@@ -147,11 +147,13 @@ Si vous êtes victime ou témoin d'un comportement inacceptable :
 À : ndjefe@gmail.com
 Objet : [CODE OF CONDUCT] Description courte
 
+text
 
 **Option 2 — WhatsApp privé**
 +237 679 449 165
 Préciser : [CODE OF CONDUCT]
 
+text
 
 **Option 3 — Contacter directement un mainteneur**
 Si le comportement problématique vient d'un mainteneur, contacter un autre

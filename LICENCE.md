@@ -1,6 +1,10 @@
+
+## LICENCE.md
+
+```markdown
 # Licence SERENA
 
-**Version 1.0 — Applicable à SERENA V1.2.0 et versions ultérieures**
+**Version 1.0 — Applicable à SERENA V1.2.2 et versions ultérieures**
 
 Copyright (c) 2026 — Contributeurs SERENA
 
@@ -21,28 +25,25 @@ copiée, modifiée et distribuée.
 
 ---
 
-
-
 ## 1. Définitions
 
-- **« Logiciel »** : le fichier `index.html` de SERENA, sa documentation
-(`README.md`, `CHANGELOG.md`, `LICENCE.md`) et l'ensemble des ressources
-graphiques et textuelles associées (logo, icônes, traductions).
+- **« Logiciel »** : l'ensemble des fichiers constituant SERENA, à savoir
+  `index.html`, `assets/css/styles.css`, `assets/js/app.js`, `manifest.json`,
+  `sw.js`, ainsi que la documentation (`README.md`, `CHANGELOG.md`,
+  `LICENCE.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`) et
+  l'ensemble des ressources graphiques et textuelles associées (logo, icônes,
+  traductions).
 - **« Utilisatrice »** : toute personne physique qui utilise le Logiciel pour
-son usage personnel.
+  son usage personnel.
 - **« Distributeur »** : toute personne physique ou morale qui redistribue le
-Logiciel, modifié ou non.
+  Logiciel, modifié ou non.
 - **« Usage commercial »** : toute utilisation du Logiciel qui génère
-directement ou indirectement un revenu (vente, abonnement, publicité,
-intégration dans un service payant, etc.).
+  directement ou indirectement un revenu (vente, abonnement, publicité,
+  intégration dans un service payant, etc.).
 
 ---
 
-
-
 ## 2. Droits accordés
-
-
 
 ### 2.1 Usage personnel et éducatif
 
@@ -53,9 +54,7 @@ dans le cadre d'un usage :
 - **familial** (suivi d'un proche avec son consentement),
 - **éducatif** (enseignement, recherche académique non commerciale),
 - **associatif à but non lucratif** (accompagnement de femmes, planning
-familial, ONG).
-
-
+  familial, ONG).
 
 ### 2.2 Modification
 
@@ -65,9 +64,7 @@ associatifs, à condition de :
 - conserver cette licence dans toute redistribution,
 - conserver les mentions de copyright,
 - ne pas utiliser le nom **SERENA** ni le logo officiel pour désigner une
-version modifiée, sauf accord écrit préalable.
-
-
+  version modifiée, sauf accord écrit préalable.
 
 ### 2.3 Redistribution
 
@@ -77,15 +74,11 @@ La redistribution gratuite est autorisée, à condition de :
 - ne pas retirer les disclaimers médicaux,
 - ne pas faire de promesses thérapeutiques ou de diagnostic,
 - ne pas modifier le calcul des estimations (fenêtre fertile, DPA, etc.)
-sans documenter clairement les changements.
+  sans documenter clairement les changements.
 
 ---
 
-
-
 ## 3. Restrictions
-
-
 
 ### 3.1 Usage commercial interdit sans accord
 
@@ -96,9 +89,7 @@ préalable. Cela inclut, sans s'y limiter :
 - l'intégration dans un service payant (SaaS, application mobile payante),
 - la monétisation par publicité, affiliation ou don obligatoire,
 - l'utilisation dans un cadre professionnel de santé (cabinets, cliniques,
-plateformes médicales) sans convention explicite.
-
-
+  plateformes médicales) sans convention explicite.
 
 ### 3.2 Usage médical réglementé
 
@@ -129,8 +120,6 @@ sur l'origine du Logiciel.
 
 ---
 
-
-
 ## 4. Absence de garantie
 
 **LE LOGICIEL EST FOURNI « EN L'ÉTAT », SANS GARANTIE D'AUCUNE SORTE,
@@ -140,19 +129,17 @@ Cela inclut, sans s'y limiter :
 
 - l'absence de garantie de fonctionnement sans erreur,
 - l'absence de garantie d'exactitude des calculs (dates, estimations,
-fenêtre fertile, DPA),
+  fenêtre fertile, DPA),
 - l'absence de garantie de conservation des données,
 - l'absence de garantie de compatibilité avec un navigateur ou un appareil
-spécifique,
+  spécifique,
 - l'absence de garantie contre la perte, la corruption ou la fuite de
-données.
+  données.
 
 **L'utilisatrice est seule responsable de la sauvegarde régulière de ses
 données** (export JSON depuis `Paramètres → Données → Exporter`).
 
 ---
-
-
 
 ## 5. Limitation de responsabilité
 
@@ -161,12 +148,12 @@ pourront être tenus responsables de :
 
 - dommages directs ou indirects liés à l'utilisation du Logiciel,
 - décisions médicales, personnelles ou professionnelles prises sur la base
-des informations produites,
+  des informations produites,
 - perte de données, interruption de service, dysfonctionnement,
 - conséquences d'une grossesse non désirée ou non détectée,
 - conséquences d'une interprétation erronée des estimations,
 - violation de la confidentialité en cas de compromission de l'appareil de
-l'utilisatrice (perte, vol, malware, accès physique).
+  l'utilisatrice (perte, vol, malware, accès physique).
 
 **SERENA ne remplace pas un professionnel de santé.** En cas de doute,
 de symptôme inhabituel ou d'urgence, consultez immédiatement un médecin,
@@ -174,22 +161,16 @@ une sage-femme ou un service d'urgence.
 
 ---
 
-
-
 ## 6. Données personnelles et confidentialité
-
-
 
 ### 6.1 Principe
 
 SERENA est conçue selon le principe **local-first** :
 
 - Aucune donnée de santé n'est transmise à un serveur exploité par les
-auteurs du Logiciel.
+  auteurs du Logiciel.
 - Aucun outil d'analyse, de tracking ou de publicité n'est intégré.
 - Aucune donnée n'est revendue ni partagée.
-
-
 
 ### 6.2 Responsabilité de l'utilisatrice
 
@@ -197,12 +178,10 @@ L'utilisatrice est **seule responsable** de la sécurité de son appareil et
 de ses données. Cela inclut :
 
 - la protection physique de l'appareil (code de déverrouillage, chiffrement
-disque),
+  disque),
 - la mise à jour du navigateur et du système d'exploitation,
 - la vigilance face aux extensions navigateur et logiciels malveillants,
 - la sauvegarde régulière des exports JSON.
-
-
 
 ### 6.3 Conformité RGPD
 
@@ -211,7 +190,7 @@ utilisant le Logiciel en local :
 
 - **aucun traitement** au sens du RGPD n'est effectué par les auteurs,
 - l'utilisatrice agit en **responsable de traitement** pour ses propres
-données,
+  données,
 - aucune obligation de déclaration CNIL n'incombe aux auteurs.
 
 Toute intégration de SERENA dans un service tiers (clinique, plateforme)
@@ -225,8 +204,6 @@ restent sous le contrôle exclusif de l'utilisatrice.
 
 ---
 
-
-
 ## 7. Contributions
 
 Les contributions (code, traductions, documentation, signalements de bugs)
@@ -236,11 +213,9 @@ sont bienvenues. En soumettant une contribution, vous acceptez :
 - de garantir que vous disposez des droits nécessaires,
 - de respecter les avertissements médicaux existants,
 - de ne pas introduire de télémétrie, publicité ou dépendance externe sans
-accord explicite.
+  accord explicite.
 
 ---
-
-
 
 ## 8. Signalement de problèmes de sécurité
 
@@ -256,8 +231,6 @@ Les vulnérabilités critiques seront corrigées en priorité et créditées
 
 ---
 
-
-
 ## 9. Durée et résiliation
 
 Cette licence est effective tant que vous respectez ses termes. Elle prend
@@ -268,8 +241,6 @@ Les clauses **4 (Absence de garantie)**, **5 (Limitation de responsabilité)**
 et **6 (Données personnelles)** survivent à la résiliation.
 
 ---
-
-
 
 ## 10. Droit applicable
 
@@ -286,16 +257,12 @@ les lois locales applicables, notamment en matière de :
 
 ---
 
-
-
 ## 11. Divisibilité
 
 Si une clause de cette licence est jugée nulle ou inapplicable, les autres
 clauses restent en vigueur.
 
 ---
-
-
 
 ## 12. Intégralité de l'accord
 
@@ -305,10 +272,7 @@ antérieure, orale ou écrite.
 
 ---
 
-
-
 ## Résumé non contractuel
-
 
 | Action                             | Autorisé ?                    |
 | ---------------------------------- | ----------------------------- |
@@ -325,13 +289,10 @@ antérieure, orale ou écrite.
 | Utiliser le logo SERENA            | ⚠️ Usage personnel uniquement |
 | Présenter comme dispositif médical | ❌ Non                         |
 
-
 **Ce résumé est indicatif et n'a pas de valeur juridique.** Seul le texte
 complet de la licence fait foi.
 
 ---
-
-
 
 ## Contact
 

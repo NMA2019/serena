@@ -94,7 +94,7 @@ Utiliser le template suivant :
 
 ## Environnement
 
-- **Version SERENA** : 1.2.0 (voir Paramètres → À propos)
+- **Version SERENA** : 1.2.2 (voir Paramètres → À propos)
 - **Navigateur** : Chrome 120 / Firefox 121 / Safari 17
 - **Système** : Windows 11 / macOS 14 / Ubuntu 22.04 / iOS 17 / Android 14
 - **Taille écran** : mobile / tablette / desktop
@@ -106,12 +106,6 @@ Utiliser le template suivant :
 ## Logs console
 
 [Coller les erreurs de la console F12]
-```
-
-
-## Contexte additionnel
-
-[Tout élément utile : données de démo, mode hors-ligne, etc.]
 ⚠️ Avertissement important
 Ne jamais joindre un export JSON réel — il contient des données médicales
 intimes (règles, températures, rapports, grossesse). Utiliser exclusivement
@@ -121,8 +115,8 @@ reproduire un bug.
 Si le bug ne se reproduit qu'avec des données réelles, décrire la structure
 (anonymisée) sans les valeurs.
 
-## Proposer une fonctionnalité
-### Avant de proposer
+Proposer une fonctionnalité
+Avant de proposer
 Vérifier qu'elle n'est pas dans la feuille de route (README.md)
 
 Vérifier qu'elle n'a pas déjà été refusée (issues fermées)
@@ -131,10 +125,10 @@ Réfléchir à son impact médical (si applicable)
 
 Vérifier qu'elle respecte le principe local-first (pas de serveur)
 
-### Créer une issue
+Créer une issue
 Utiliser le template suivant :
 
-```markdown
+markdown
 ## Fonctionnalité proposée
 
 [Description claire]
@@ -163,8 +157,8 @@ Nécessite-t-elle des sources scientifiques ?]
 ## Impact performance
 
 [Impact sur le chargement, la mémoire, le stockage ?]
-## Soumettre une pull request
-### Prérequis
+Soumettre une pull request
+Prérequis
 Avoir une issue ouverte décrivant le changement
 
 Avoir lu le style de code (section suivante)
@@ -173,29 +167,26 @@ Avoir testé sur Chrome + Firefox + Safari
 
 Avoir lancé les auto-tests (Paramètres → État technique)
 
-### Procédure
+Procédure
 Forker le dépôt officiel
 
 Créer une branche descriptive :
 
-```text
+text
 feature/fenetre-fertile-symptothermique
 fix/pin-partiel-onboarding
 docs/guide-installation
 a11y/contraste-muted
-```
-
 Commiter avec des messages clairs (voir conventions ci-dessous)
 
 Pousser sur votre fork
 
 Ouvrir une pull request vers la branche main
 
-### Conventions de commit
+Conventions de commit
 Format : type(scope): description courte
 
-#### Types
-
+Types
 feat : nouvelle fonctionnalité
 
 fix : correction de bug
@@ -218,19 +209,15 @@ sec : sécurité
 
 chore : tâches diverses (build, config)
 
-#### Exemples
-
-```text
+Exemples
+text
 feat(fertility): ajoute suivi de la glaire cervicale
 fix(pin): empêche la persistance d'un PIN partiel
 docs(readme): ajoute section PWA
 a11y(modales): ajoute focus trap et fermeture Échap
 i18n(es): ajoute traduction espagnole (partielle)
 sec(crypto): passe à 200k itérations PBKDF2
-```
-
-#### Règles
-
+Règles
 Impératif présent (« ajoute », pas « ajouté »)
 
 Première ligne ≤ 72 caractères
@@ -239,9 +226,8 @@ Corps optionnel, séparé par une ligne vide
 
 Référencer les issues (Refs #42, Closes #43)
 
-### Template de pull request
-
-```markdown
+Template de pull request
+markdown
 ## Description
 
 [Description du changement]
@@ -282,9 +268,7 @@ Closes #[numéro]
 ## Notes pour les reviewers
 
 [Points d'attention particuliers]
-```
-
-### Revue de code
+Revue de code
 Un mainteneur examinera votre PR sous 7 jours (généralement)
 
 Des commentaires peuvent demander des modifications
@@ -295,11 +279,17 @@ Une fois approuvée, la PR sera mergée (squash merge par défaut)
 
 En cas de désaccord, discuter dans les commentaires, ne pas forcer
 
-## Style de code
-### Principes généraux
+Style de code
+Principes généraux
 Aucune dépendance externe — vanilla JS uniquement
 
-Application mono-fichier `index.html` avec ressources PWA statiques
+Structure en 3 fichiers :
+
+index.html : structure HTML + SVG sprite
+
+assets/css/styles.css : design tokens + composants
+
+assets/js/app.js : logique applicative (7 blocs)
 
 ES2020 minimum (optional chaining, nullish coalescing autorisés)
 
@@ -307,9 +297,8 @@ Pas de build step — le code doit tourner tel quel
 
 Pas de minification — le code doit rester lisible
 
-### JavaScript
-
-```js
+JavaScript
+js
 // ✅ Bon
 const periods = S.state.periods.filter(p => p.endDate);
 function predictNextPeriod(periods, cycleLength){
@@ -320,10 +309,7 @@ function predictNextPeriod(periods, cycleLength){
 // ❌ Mauvais
 var periods=S.state.periods.filter(function(p){return p.endDate});
 function predictNextPeriod(periods,cycleLength){if(!periods)return null;/*...*/}
-```
-
-#### Règles :
-
+Règles :
 const par défaut, let si réassignation, jamais var
 
 Point-virgule obligatoire
@@ -342,9 +328,8 @@ Fonctions nommées (pas d'anonymes pour les fonctions > 3 lignes)
 
 Commentaires en français (ou anglais pour les blocs techniques)
 
-### Sécurité
-
-```js
+Sécurité
+js
 // ✅ Bon — échappement systématique
 el.innerHTML = `<p>${S.escapeHtml(userInput)}</p>`;
 
@@ -357,6 +342,7 @@ el.textContent = userInput;
 // ❌ Mauvais — eval, Function constructor
 eval(userInput);
 new Function(userInput)();
+CSS
 Custom properties pour toutes les couleurs (--primary, --bg, etc.)
 
 kebab-case pour les classes (.cal-day, .btn-primary)
@@ -369,7 +355,7 @@ Pas d'ID pour le style (uniquement pour le JS)
 
 Respecter prefers-color-scheme et prefers-reduced-motion
 
-### Accessibilité
+Accessibilité
 Tout bouton doit avoir un label (texte ou aria-label)
 
 Toute image informative doit avoir un alt
@@ -382,7 +368,7 @@ Focus visible sur tous les éléments interactifs
 
 Navigation clavier complète
 
-### Internationalisation
+Internationalisation
 Aucune chaîne en dur dans le JS — utiliser S.t('key')
 
 Ajouter les clés dans S.dict.fr et S.dict.en
@@ -391,15 +377,15 @@ Utiliser S.t('key', { n: 42 }) pour l'interpolation
 
 Échapper avec S.escapeHtml(S.t('key')) lors d'injection HTML
 
-### Dates
+Dates
 Toujours utiliser S.dt.* (serial UTC)
 
 Jamais new Date() pour les dates calendaires
 
 new Date() toléré uniquement pour l'heure exacte (contractions, timestamps)
 
-## Tests
-### Auto-tests intégrés
+Tests
+Auto-tests intégrés
 Lancer via Paramètres → État technique. Les 8 tests couvrent :
 
 predictNextPeriod — ne saute pas un cycle
@@ -420,7 +406,7 @@ escapeHtml — anti-XSS
 
 Toute PR doit maintenir ces 8 tests en ✅.
 
-### Tests manuels obligatoires
+Tests manuels obligatoires
 Avant de soumettre une PR, tester :
 
 □ Premier lancement → onboarding → PIN → dashboard
@@ -435,10 +421,9 @@ Avant de soumettre une PR, tester :
 □ Mode hors-ligne (couper le réseau)
 □ Navigation clavier (Tab, Échap, Entrée)
 □ Zoom navigateur (Ctrl + / Ctrl -)
-#### Ajouter un test
-
-```js
-// Dans S.runSelfTests (Bloc 6)
+Ajouter un test
+js
+// Dans S.runSelfTests (Bloc 6 de app.js)
 try{
   const result = S.calc.maFonction(testInput);
   tests.push({
@@ -452,12 +437,10 @@ try{
     error: e.message
   });
 }
-```
-
 Les tests ne doivent jamais écrire dans IndexedDB ni localStorage.
 
-## Documentation
-### Mettre à jour
+Documentation
+Mettre à jour
 README.md si la fonctionnalité change l'usage
 
 CHANGELOG.md systématiquement (section [Unreleased])
@@ -466,9 +449,8 @@ Aide intégrée (S.dict.fr.helpBody) si l'UX change
 
 Commentaires JSDoc pour les fonctions publiques
 
-#### Format JSDoc
-
-```js
+Format JSDoc
+js
 /**
  * Prédit la date des prochaines règles.
  * @param {Array<{startDate:string}>} periods
@@ -478,10 +460,8 @@ Commentaires JSDoc pour les fonctions publiques
 S.calc.predictNextPeriod = function(periods, cycleLength){
   // ...
 };
-```
-
-## Traductions
-### Ajouter une langue
+Traductions
+Ajouter une langue
 Dupliquer S.dict.fr dans S.dict.xx (xx = code ISO 639-1)
 
 Traduire toutes les clés
@@ -492,7 +472,7 @@ Ajouter la langue dans S.openLanguageSheet
 
 Mettre à jour README.md
 
-### Règles de traduction
+Règles de traduction
 Ne pas traduire les noms propres (SERENA, Implanon, Nexplanon)
 
 Ne pas traduire les unités (°C, SA, DPA)
@@ -503,7 +483,7 @@ Vérifier les longueurs (certaines langues sont plus longues)
 
 Tester l'interface dans la nouvelle langue
 
-### Corrections de traductions
+Corrections de traductions
 Si vous repérez une erreur dans une traduction existante :
 
 Ouvrir une issue avec le tag i18n
@@ -512,7 +492,7 @@ Indiquer la clé, la langue, la traduction actuelle, la proposition
 
 Justifier (source, contexte culturel)
 
-### Sécurité
+Sécurité
 Ne jamais ouvrir d'issue publique pour une vulnérabilité. Voir
 SECURITY.md pour la procédure de divulgation responsable.
 
@@ -529,10 +509,10 @@ l'échappement HTML
 seront examinées avec une attention particulière et pourront nécessiter
 une revue supplémentaire.
 
-## Questions fréquentes
+Questions fréquentes
 Puis-je ajouter une dépendance externe ?
-Non. Le projet est volontairement mono-fichier sans dépendance. Si vous
-avez besoin d'une fonctionnalité, implémentez-la en vanilla JS.
+Non. Le projet est volontairement sans dépendance. Si vous avez besoin
+d'une fonctionnalité, implémentez-la en vanilla JS.
 
 Puis-je ajouter Google Analytics / Plausible / etc. ?
 Non. Aucune télémétrie, aucun tracking, aucune publicité. Principe
@@ -550,7 +530,7 @@ ne pas retirer les disclaimers
 être testée avec des cas limites
 
 Puis-je utiliser un framework (React, Vue, Svelte) ?
-Non. Le projet est vanilla JS par choix (portabilité, offline, zéro build).
+Non. Le projet est en vanilla JS par choix (portabilité, offline, zéro build).
 
 Puis-je proposer une refonte complète ?
 Discutons-en d'abord. Ouvrir une issue avec le tag discussion pour
@@ -572,13 +552,13 @@ l'issue liée (si applicable)
 
 les tests effectués
 
-## Reconnaissance
+Reconnaissance
 Tous les contributeurs sont crédités dans le README.md (section Crédits)
 et dans l'historique Git. Les contributions significatives (nouvelles
 fonctionnalités, corrections critiques, traductions complètes) sont
 mentionnées dans le CHANGELOG.
 
-## Contact
+Contact
 Email : ndjefe@gmail.com
 
 WhatsApp : +237 679 449 165

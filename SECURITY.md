@@ -1,3 +1,6 @@
+## SECURITY.md
+
+```markdown
 ## Notre engagement
 
 SERENA traite des **données de santé intimes** (cycle menstruel, fertilité,
@@ -17,7 +20,8 @@ Nous nous engageons à :
 
 | Version | Supportée | Notes |
 |---|---|---|
-| **1.2.x** | ✅ Oui | Version stable actuelle |
+| **1.2.2** | ✅ Oui | Version stable actuelle |
+| 1.2.0 | ⚠️ Partiel | Correctifs critiques uniquement |
 | 1.1.x | ❌ Non | Obsolète — mettre à jour |
 | 1.0.x | ❌ Non | Obsolète — mettre à jour |
 
@@ -36,18 +40,19 @@ ne soit disponible.
 ### Canaux de signalement privés
 
 **Option 1 — Email (recommandé)**
-
 À : ndjefe@gmail.com
 Objet : [SECURITY] SERENA — Description courte
 
+text
 
 **Option 2 — WhatsApp**
-
 +237 679 449 165
 Préciser : [SECURITY] SERENA
 
+text
 
 **Option 3 — GitHub Security Advisory**
+
 Si le dépôt le supporte, utiliser l'onglet "Security" → "Report a vulnerability".
 
 ### Contenu du signalement
@@ -120,6 +125,7 @@ réponse sous 7 jours, relancez par un autre canal.
 - **Exposition de données** : fuites via export, impression, notifications
 - **Logique métier** : contournement de l'auto-lock, du PIN
 - **Dépendances** : aucune (mais vérifier les imports indirects)
+- **Service Worker** : fuites via cache, mauvaise portée
 
 ### Hors périmètre
 
@@ -171,126 +177,138 @@ IndexedDB sont en clair.
 
 #### Service Worker et contexte sécurisé
 
-SERENA enregistre le fichier `sw.js` et référence `manifest.json` depuis son
-répertoire. Le navigateur n'autorise ces fonctions que depuis HTTPS ou
-`localhost`. Une ouverture directe en `file://` bloque le manifeste et le
-Service Worker. Cette restriction est imposée par le navigateur et ne constitue
-pas une vulnérabilité de SERENA.
+SERENA enregistre `sw.js` depuis la racine du projet et référence
+`manifest.json` depuis `index.html`. Le navigateur n'autorise ces fonctions
+que depuis HTTPS ou `localhost`. Une ouverture directe en `file://` bloque
+le manifeste et le Service Worker. Cette restriction est imposée par le
+navigateur et ne constitue pas une vulnérabilité de SERENA.
 
-#### WebAuthn partiel
+#### ⚠️ Chemins du Service Worker à vérifier
 
+Le fichier `sw.js` liste actuellement dans son `PRECACHE_URLS` :
+
+```js
+'./index.html',
+'./styles.css',      // ⚠️ N'existe pas à la racine
+'./app.js',          // ⚠️ N'existe pas à la racine
+'./manifest.json',
+'./assets/favicon.ico',
+...
+Mais dans index.html :
+
+html
+<link rel="stylesheet" href="./assets/css/styles.css">
+<script src="./assets/js/app.js"></script>
+Les chemins doivent être alignés. Sans cette correction, styles.css
+et app.js ne seront jamais précachés, et l'application ne fonctionnera
+pas complètement hors-ligne. Cette incohérence est documentée et sera
+corrigée en V1.3.
+
+WebAuthn partiel
 Aucun credential n'est enregistré automatiquement. Le bouton biométrie
-n'est donc jamais affiché en pratique. **Ce n'est pas une vulnérabilité**,
+n'est donc jamais affiché en pratique. Ce n'est pas une vulnérabilité,
 juste une fonctionnalité incomplète.
 
-### Historique des vulnérabilités corrigées
+Historique des vulnérabilités corrigées
+V1.1 → V1.2 (2026-09-26)
+CVE	Description	Gravité	Statut
+Aucune CVE	Hash PIN SHA-256 sans itérations	🔴 Critique	✅ Corrigé (PBKDF2)
+Aucune CVE	XSS via innerHTML non échappé	🟠 Majeur	✅ Corrigé (escapeHtml)
+Aucune CVE	PIN partiel persisté en cas d'interruption	🟠 Majeur	✅ Corrigé (transition atomique)
+Aucune CVE	Auto-lock contournable par throttling	🟡 Mineur	✅ Corrigé (visibilitychange)
+Aucune CVE	jsPDF depuis CDN compromettable	🟡 Mineur	✅ Supprimé (window.print)
+V1.0 → V1.1 (2026-09-15)
+Description	Gravité	Statut
+localStorage sans chiffrement	🟠 Majeur	✅ Migré vers IndexedDB
+Pas d'i18n (FR uniquement)	🔵 Faible	✅ Ajouté FR + EN
+Bonnes pratiques pour les utilisatrices
+Sécurité de base
+Choisir un PIN non trivial (pas 1234, 0000, année de naissance)
 
-#### V1.1 → V1.2 (2026-09-26)
+Activer l'auto-lock (5 minutes recommandé)
 
-| CVE | Description | Gravité | Statut |
-|---|---|---|---|
-| Aucune CVE | Hash PIN SHA-256 sans itérations | 🔴 Critique | ✅ Corrigé (PBKDF2) |
-| Aucune CVE | XSS via `innerHTML` non échappé | 🟠 Majeur | ✅ Corrigé (`escapeHtml`) |
-| Aucune CVE | PIN partiel persisté en cas d'interruption | 🟠 Majeur | ✅ Corrigé (transition atomique) |
-| Aucune CVE | Auto-lock contournable par throttling | 🟡 Mineur | ✅ Corrigé (`visibilitychange`) |
-| Aucune CVE | jsPDF depuis CDN compromettable | 🟡 Mineur | ✅ Supprimé (`window.print`) |
+Verrouiller l'appareil avec un code biométrique ou PIN fort
 
-#### V1.0 → V1.1 (2026-09-15)
+Activer le chiffrement disque (BitLocker, FileVault, LUKS, iOS/Android)
 
-| Description | Gravité | Statut |
-|---|---|---|
-| localStorage sans chiffrement | 🟠 Majeur | ✅ Migré vers IndexedDB |
-| Pas d'i18n (FR uniquement) | 🔵 Faible | ✅ Ajouté FR + EN |
+Mettre à jour le navigateur et le système régulièrement
 
----
+Sauvegarde
+Exporter régulièrement (Paramètres → Données → Exporter)
 
-## Bonnes pratiques pour les utilisatrices
+Stocker l'export dans un endroit sûr (gestionnaire de mots de passe,
+cloud chiffré)
 
-### Sécurité de base
+Ne pas partager l'export avec des tiers non médicaux
 
-- **Choisir un PIN non trivial** (pas 1234, 0000, année de naissance)
-- **Activer l'auto-lock** (5 minutes recommandé)
-- **Verrouiller l'appareil** avec un code biométrique ou PIN fort
-- **Activer le chiffrement disque** (BitLocker, FileVault, LUKS, iOS/Android)
-- **Mettre à jour** le navigateur et le système régulièrement
+Ne pas joindre l'export à un email non chiffré
 
-### Sauvegarde
+Vie privée
+Éviter les navigateurs partagés (ordinateur public, famille)
 
-- **Exporter régulièrement** (Paramètres → Données → Exporter)
-- **Stocker l'export** dans un endroit sûr (gestionnaire de mots de passe,
-  cloud chiffré)
-- **Ne pas partager** l'export avec des tiers non médicaux
-- **Ne pas joindre** l'export à un email non chiffré
+Utiliser la navigation privée sur appareils partagés (mais les données
+sont perdues à la fermeture)
 
-### Vie privée
+Désactiver la synchronisation navigateur pour ce site (Chrome Sync,
+Firefox Sync)
 
-- **Éviter les navigateurs partagés** (ordinateur public, famille)
-- **Utiliser la navigation privée** sur appareils partagés (mais les données
-  sont perdues à la fermeture)
-- **Désactiver la synchronisation** navigateur pour ce site (Chrome Sync,
-  Firefox Sync)
-- **Vérifier les extensions** navigateur (certaines lisent toutes les pages)
-- **Ne pas installer** SERENA sur un appareil non maîtrisé
+Vérifier les extensions navigateur (certaines lisent toutes les pages)
 
-### En cas de perte ou vol
+Ne pas installer SERENA sur un appareil non maîtrisé
 
-1. **Révoquer** l'accès distant à l'appareil (Find My, Google Find)
-2. **Effacer à distance** si possible
-3. **Changer les mots de passe** partagés avec l'appareil
-4. **Prévenir** les professionnels de santé si données sensibles exposées
-5. **Restaurer** depuis un export JSON récent sur un nouvel appareil
+En cas de perte ou vol
+Révoquer l'accès distant à l'appareil (Find My, Google Find)
 
----
+Effacer à distance si possible
 
-## Reconnaissance des chercheurs
+Changer les mots de passe partagés avec l'appareil
 
+Prévenir les professionnels de santé si données sensibles exposées
+
+Restaurer depuis un export JSON récent sur un nouvel appareil
+
+Reconnaissance des chercheurs
 Les chercheurs en sécurité qui signalent des vulnérabilités de manière
 responsable seront :
 
-- **Crédités** dans le CHANGELOG (avec leur accord)
-- **Mentionnés** dans cette page (section "Remerciements")
-- **Contactés** pour discuter du correctif
+Crédités dans le CHANGELOG (avec leur accord)
 
-### Souhaitez-vous l'anonymat ?
+Mentionnés dans cette page (section "Remerciements")
 
+Contactés pour discuter du correctif
+
+Souhaitez-vous l'anonymat ?
 Précisez-le dans votre signalement. Nous respecterons votre choix.
 
-### Remerciements
+Remerciements
+(Aucun chercheur à remercier pour le moment.)
 
-*(Aucun chercheur à remercier pour le moment.)*
-
----
-
-## Conformité
-
-### RGPD
-
-SERENA traite des **données de santé** au sens de l'article 9 du RGPD.
+Conformité
+RGPD
+SERENA traite des données de santé au sens de l'article 9 du RGPD.
 En utilisation locale :
 
-- Les auteurs ne traitent **aucune** donnée personnelle
-- L'utilisatrice agit en **responsable de traitement** pour ses propres données
-- Aucune obligation de déclaration CNIL n'incombe aux auteurs
+Les auteurs ne traitent aucune donnée personnelle
 
-### MDR (dispositif médical)
+L'utilisatrice agit en responsable de traitement pour ses propres données
 
-SERENA **n'est pas** un dispositif médical au sens du Règlement (UE)
+Aucune obligation de déclaration CNIL n'incombe aux auteurs
+
+MDR (dispositif médical)
+SERENA n'est pas un dispositif médical au sens du Règlement (UE)
 2017/745. Elle ne diagnostique rien, ne traite rien, ne prévient rien.
 
-### Autres juridictions
-
+Autres juridictions
 Les utilisatrices hors UE doivent vérifier la conformité locale
 (lois nationales sur les données de santé, dispositifs médicaux).
 
----
-
-## Contact sécurité
-
-**NDJEFE MBAKOP ARNAUD**
+Contact sécurité
+NDJEFE MBAKOP ARNAUD
 IT — Cofondateur et Directeur du CFP-CMD
-*Licence Administration Réseaux et Systèmes — CCNA, MTCNA*
+Licence Administration Réseaux et Systèmes — CCNA, MTCNA
 
-- 📧 **ndjefe@gmail.com**
-- 📱 **WhatsApp** : +237 679 449 165
+📧 ndjefe@gmail.com
 
-**Merci de contribuer à la sécurité de SERENA.** 🔒
+📱 WhatsApp : +237 679 449 165
+
+Merci de contribuer à la sécurité de SERENA. 🔒

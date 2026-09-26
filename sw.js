@@ -9,8 +9,8 @@
    /* Ressources à précacher (App Shell) */
    const PRECACHE_URLS = [
   './index.html',
-  './styles.css',
-  './app.js',
+  './assets/css/styles.css',
+  './assets/css/app.js',
   './manifest.json',
   './assets/favicon.ico',
   './assets/favicon-96x96.png',
