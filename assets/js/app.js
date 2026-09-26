@@ -4748,7 +4748,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 S.setupPWA = function(){
   if(!('serviceWorker' in navigator) || !window.isSecureContext) return;
-  navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(error => {
+  navigator.serviceWorker.register('./../sw.js', { scope: './assets' }).catch(error => {
     console.warn('SERENA: service worker indisponible', error);
   });
 };
