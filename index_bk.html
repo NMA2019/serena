@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#5B3A8F">
+<meta name="description" content="SÉRÉNA — Suivi bienveillant de votre santé féminine">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SÉRÉNA">
+<title>SÉRÉNA — Santé Féminine</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%235B3A8F'/%3E%3Cstop offset='100%25' stop-color='%23B8A3DC'/%3E%3C/linearGradient%3E%3ClinearGradient id='r' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23F5A9C4'/%3E%3Cstop offset='100%25' stop-color='%237B5BB5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M100 30 A70 70 0 1 0 100 170' fill='none' stroke='url(%23g)' stroke-width='14' stroke-linecap='round'/%3E%3Cpath d='M100 55 A45 45 0 1 1 100 145' fill='none' stroke='url(%23g)' stroke-width='12' stroke-linecap='round'/%3E%3Cpath d='M100 170 A70 70 0 0 0 165 115' fill='none' stroke='url(%23r)' stroke-width='14' stroke-linecap='round'/%3E%3Cpath d='M60 100 Q55 75 75 68 Q85 90 70 108 Q62 106 60 100 Z' fill='%23A8C8A0'/%3E%3C/svg%3E">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --violet-900:#2E1B5B; --violet-700:#5B3A8F; --violet-500:#7B5BB5; --violet-300:#B8A3DC;
+  --rose-500:#F5A9C4; --rose-300:#FBD5E3; --rose-100:#FDF0F5;
+  --vert-500:#A8C8A0; --vert-300:#D4E5CE;
+  --gris-900:#2B2B2B; --gris-700:#555; --gris-500:#888; --gris-300:#DDD; --gris-100:#F7F5FA;
+  --blanc:#FFFFFF; --danger:#E85A6E; --success:#6BBF8A; --warn:#F0B860;
+  --radius:16px; --radius-sm:10px;
+  --shadow-sm:0 2px 8px rgba(91,58,143,0.08);
+  --shadow:0 6px 20px rgba(91,58,143,0.12);
+  --font:'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow-x:hidden}
+body{font-family:var(--font);background:var(--gris-100);color:var(--gris-900);font-size:16px;line-height:1.5;overscroll-behavior-y:none;-webkit-font-smoothing:antialiased}
+
+/* Splash */
+#splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#FDF0F5,#F7F5FA);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s,visibility .5s}
+#splash.hidden{opacity:0;visibility:hidden}
+.splash-logo{width:140px;height:140px;animation:pulse 2s ease-in-out infinite}
+.splash-title{margin-top:20px;font-size:2rem;font-weight:700;color:var(--violet-700);letter-spacing:.15em}
+.splash-sub{color:var(--gris-500);font-size:.9rem;margin-top:6px}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+/* Lock screen */
+#lockScreen{position:fixed;inset:0;z-index:9500;background:linear-gradient(160deg,#FDF0F5,#F7F5FA);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+#lockScreen.active{display:flex}
+.lock-logo{width:80px;height:80px;margin-bottom:20px}
+.lock-title{font-size:1.3rem;font-weight:700;color:var(--violet-900);margin-bottom:8px}
+.lock-sub{color:var(--gris-500);font-size:.9rem;margin-bottom:28px}
+.pin-display{display:flex;gap:12px;margin-bottom:32px}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:var(--gris-300);transition:background .2s}
+.pin-dot.filled{background:var(--violet-700);transform:scale(1.2)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:280px}
+.pin-key{width:70px;height:70px;border-radius:50%;background:var(--blanc);border:none;font-size:1.5rem;font-weight:600;color:var(--violet-900);cursor:pointer;box-shadow:var(--shadow-sm);transition:transform .1s}
+.pin-key:active{transform:scale(0.92);background:var(--rose-100)}
+.pin-key.empty{background:transparent;box-shadow:none;cursor:default}
+.pin-bio{margin-top:20px;background:none;border:2px solid var(--violet-300);color:var(--violet-700);padding:12px 24px;border-radius:30px;font-weight:600;cursor:pointer;font-size:.95rem}
+
+/* App Shell */
+#app{display:none;flex-direction:column;min-height:100vh;padding-bottom:80px}
+#app.active{display:flex}
+
+/* Header */
+header{background:var(--blanc);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-sm);position:sticky;top:0;z-index:100;padding-top:calc(14px + env(safe-area-inset-top))}
+.header-brand{display:flex;align-items:center;gap:10px}
+.header-logo{width:36px;height:36px}
+.header-title{font-size:1.1rem;font-weight:700;color:var(--violet-700);letter-spacing:.05em}
+.header-btn{background:none;border:none;font-size:1.4rem;color:var(--violet-700);cursor:pointer;padding:6px;border-radius:50%}
+.header-btn:active{background:var(--rose-100)}
+
+/* Views */
+.view{display:none;padding:18px;animation:fadeIn .3s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.view-title{font-size:1.4rem;font-weight:700;color:var(--violet-900);margin-bottom:4px}
+.view-sub{color:var(--gris-500);font-size:.9rem;margin-bottom:18px}
+
+/* Cards */
+.card{background:var(--blanc);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm);margin-bottom:14px}
+.card-gradient{background:linear-gradient(135deg,var(--violet-700),var(--violet-500) 60%,var(--rose-500));color:var(--blanc)}
+.card-gradient .card-title,.card-gradient .card-value,.card-gradient .card-desc{color:var(--blanc)}
+.card-gradient .card-unit{color:rgba(255,255,255,0.8)}
+.card-gradient .card-desc{color:rgba(255,255,255,0.9)}
+.card-preg{background:linear-gradient(135deg,#F5A9C4,#B8A3DC);color:var(--blanc)}
+.card-preg .card-title,.card-preg .card-value,.card-preg .card-desc{color:var(--blanc)}
+.card-title{font-size:.85rem;color:var(--gris-500);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.card-value{font-size:2rem;font-weight:700;color:var(--violet-900);margin-top:6px;line-height:1.1}
+.card-unit{font-size:1rem;font-weight:500;color:var(--gris-500);margin-left:4px}
+.card-desc{font-size:.85rem;color:var(--gris-700);margin-top:8px;line-height:1.4}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;border-radius:var(--radius-sm);border:none;font-size:1rem;font-weight:600;font-family:var(--font);cursor:pointer;transition:transform .15s;width:100%}
+.btn:active{transform:scale(0.97)}
+.btn-primary{background:var(--violet-700);color:var(--blanc);box-shadow:var(--shadow-sm)}
+.btn-secondary{background:var(--rose-100);color:var(--violet-700)}
+.btn-outline{background:transparent;color:var(--violet-700);border:2px solid var(--violet-300)}
+.btn-danger{background:var(--danger);color:var(--blanc)}
+.btn-sm{padding:9px 14px;font-size:.85rem;width:auto}
+
+/* Bottom Nav */
+nav.bottom{position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--blanc);display:flex;justify-content:space-around;align-items:center;padding:8px 0 calc(8px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(91,58,143,0.08);border-top:1px solid var(--gris-300)}
+.nav-item{background:none;border:none;font-family:var(--font);display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--gris-500);font-size:.65rem;font-weight:600;cursor:pointer;padding:4px 8px;border-radius:10px}
+.nav-item .ico{font-size:1.3rem;line-height:1}
+.nav-item.active{color:var(--violet-700)}
+
+/* Calendar */
+.cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cal-month{font-weight:700;color:var(--violet-900);font-size:1.1rem}
+.cal-nav{background:var(--rose-100);border:none;width:36px;height:36px;border-radius:50%;color:var(--violet-700);font-size:1.1rem;cursor:pointer}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal-dow{font-size:.7rem;color:var(--gris-500);font-weight:700;padding:6px 0}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:.85rem;cursor:pointer;position:relative}
+.cal-day.empty{cursor:default}
+.cal-day.today{border:2px solid var(--violet-700);font-weight:700}
+.cal-day.period{background:var(--rose-500);color:var(--blanc);font-weight:600}
+.cal-day.fertile{background:var(--vert-300);color:var(--violet-900)}
+.cal-day.ovulation{background:var(--vert-500);color:var(--blanc);font-weight:700}
+.cal-day.predicted{background:var(--rose-100);color:var(--rose-500);border:1px dashed var(--rose-500)}
+.cal-day.period.predicted{background:var(--rose-300);color:var(--violet-900);border:1px dashed var(--rose-500)}
+.cal-day.symptom::after{content:'';position:absolute;bottom:3px;width:5px;height:5px;border-radius:50%;background:var(--violet-700)}
+.cal-day.temp::before{content:'';position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;background:var(--warn)}
+.cal-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;font-size:.75rem;color:var(--gris-700)}
+.cal-legend span{display:flex;align-items:center;gap:5px}
+.lg-box{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+/* Forms */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:.85rem;font-weight:600;color:var(--violet-900);margin-bottom:6px}
+.form-input,.form-select,.form-textarea{width:100%;padding:12px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--gris-300);font-size:1rem;font-family:var(--font);background:var(--blanc);color:var(--gris-900)}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--violet-500);box-shadow:0 0 0 3px rgba(123,91,181,0.15)}
+.form-textarea{resize:vertical;min-height:70px}
+.form-hint{font-size:.75rem;color:var(--gris-500);margin-top:4px}
+
+/* Implant list */
+.implant-item{display:flex;justify-content:space-between;align-items:center;padding:14px;background:var(--blanc);border-radius:var(--radius-sm);margin-bottom:10px;box-shadow:var(--shadow-sm)}
+.implant-info strong{display:block;color:var(--violet-900);font-size:.95rem}
+.implant-info small{color:var(--gris-500);font-size:.8rem}
+.implant-badge{padding:4px 10px;border-radius:20px;font-size:.7rem;font-weight:700;text-transform:uppercase}
+.badge-actif{background:var(--vert-300);color:#3A7A4F}
+.badge-expire{background:var(--rose-300);color:#A83A5A}
+.badge-bientot{background:#FBE5B5;color:#8A5A00}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(46,27,91,0.5);z-index:1000;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.active{display:flex}
+.modal{background:var(--blanc);width:100%;max-width:520px;border-radius:24px 24px 0 0;padding:22px;max-height:90vh;overflow-y:auto;animation:slideUp .3s ease;padding-bottom:calc(22px + env(safe-area-inset-bottom))}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modal-title{font-size:1.2rem;font-weight:700;color:var(--violet-900)}
+.modal-close{background:var(--rose-100);border:none;width:34px;height:34px;border-radius:50%;font-size:1.1rem;color:var(--violet-700);cursor:pointer}
+
+/* Pills */
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.pill{padding:8px 14px;border-radius:20px;background:var(--gris-100);border:1.5px solid var(--gris-300);font-size:.85rem;font-weight:600;color:var(--gris-700);cursor:pointer;transition:all .2s}
+.pill.selected{background:var(--violet-700);color:var(--blanc);border-color:var(--violet-700)}
+.pill.emoji{font-size:1.4rem;padding:8px 12px;line-height:1}
+
+/* Onboarding */
+.onb-step{display:none}
+.onb-step.active{display:block}
+.onb-illustration{font-size:4rem;text-align:center;margin:20px 0}
+.onb-title{font-size:1.5rem;font-weight:700;color:var(--violet-900);text-align:center;margin-bottom:10px}
+.onb-text{color:var(--gris-700);text-align:center;margin-bottom:24px;line-height:1.6}
+.onb-dots{display:flex;justify-content:center;gap:8px;margin:20px 0}
+.onb-dot{width:8px;height:8px;border-radius:50%;background:var(--gris-300);transition:all .3s}
+.onb-dot.active{background:var(--violet-700);width:24px;border-radius:4px}
+
+/* Toast */
+#toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--violet-900);color:var(--blanc);padding:12px 20px;border-radius:30px;font-size:.9rem;font-weight:600;z-index:2000;opacity:0;transition:all .3s;pointer-events:none;max-width:90%;box-shadow:var(--shadow)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Misc */
+.empty-state{text-align:center;padding:40px 20px;color:var(--gris-500)}
+.empty-state .ico{font-size:3rem;margin-bottom:12px;opacity:.5}
+.row-between{display:flex;justify-content:space-between;align-items:center}
+.mt-12{margin-top:12px}.mt-20{margin-top:20px}
+.disclaimer{background:#FFF8E5;border-left:4px solid var(--warn);padding:12px;border-radius:8px;font-size:.8rem;color:#7A5A00;margin-top:14px;line-height:1.5}
+canvas{width:100%;height:auto;display:block}
+
+/* Symptoms chips */
+.sym-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--rose-100);border-radius:20px;font-size:.8rem;color:var(--violet-700);margin:4px 4px 0 0;font-weight:600}
+
+/* Progress bar pregnancy */
+.progress-bar{height:14px;background:rgba(255,255,255,0.3);border-radius:7px;overflow:hidden;margin-top:10px}
+.progress-fill{height:100%;background:var(--blanc);border-radius:7px;transition:width .5s ease}
+
+/* Timeline */
+.timeline{position:relative;padding-left:28px}
+.timeline::before{content:'';position:absolute;left:9px;top:6px;bottom:6px;width:2px;background:var(--rose-300)}
+.tl-item{position:relative;padding-bottom:16px}
+.tl-dot{position:absolute;left:-23px;top:4px;width:14px;height:14px;border-radius:50%;background:var(--violet-700);border:3px solid var(--blanc);box-shadow:0 0 0 2px var(--violet-300)}
+.tl-dot.done{background:var(--success)}
+.tl-dot.upcoming{background:var(--gris-300)}
+.tl-title{font-weight:600;color:var(--violet-900);font-size:.9rem}
+.tl-sub{font-size:.8rem;color:var(--gris-500)}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <svg class="splash-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="gViolet" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#5B3A8F"/><stop offset="100%" stop-color="#B8A3DC"/></linearGradient>
+      <linearGradient id="gRose" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F5A9C4"/><stop offset="100%" stop-color="#7B5BB5"/></linearGradient>
+      <linearGradient id="gVert" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#A8C8A0"/><stop offset="100%" stop-color="#5B3A8F"/></linearGradient>
+    </defs>
+    <path d="M100 30 A70 70 0 1 0 100 170" fill="none" stroke="url(#gViolet)" stroke-width="14" stroke-linecap="round"/>
+    <path d="M100 55 A45 45 0 1 1 100 145" fill="none" stroke="url(#gViolet)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M100 170 A70 70 0 0 0 165 115" fill="none" stroke="url(#gRose)" stroke-width="14" stroke-linecap="round"/>
+    <path d="M60 100 Q55 75 75 68 Q85 90 70 108 Q62 106 60 100 Z" fill="url(#gVert)"/>
+  </svg>
+  <div class="splash-title">SÉRÉNA</div>
+  <div class="splash-sub">Votre santé, en toute sérénité</div>
+</div>
+
+<!-- LOCK SCREEN -->
+<div id="lockScreen">
+  <svg class="lock-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <path d="M100 30 A70 70 0 1 0 100 170" fill="none" stroke="#5B3A8F" stroke-width="14" stroke-linecap="round"/>
+    <path d="M100 55 A45 45 0 1 1 100 145" fill="none" stroke="#5B3A8F" stroke-width="12" stroke-linecap="round"/>
+    <path d="M100 170 A70 70 0 0 0 165 115" fill="none" stroke="#F5A9C4" stroke-width="14" stroke-linecap="round"/>
+    <path d="M60 100 Q55 75 75 68 Q85 90 70 108 Q62 106 60 100 Z" fill="#A8C8A0"/>
+  </svg>
+  <div class="lock-title">SÉRÉNA est verrouillée</div>
+  <div class="lock-sub">Entrez votre code PIN</div>
+  <div class="pin-display" id="pinDisplay">
+    <span class="pin-dot"></span><span class="pin-dot"></span>
+    <span class="pin-dot"></span><span class="pin-dot"></span>
+  </div>
+  <div class="pin-pad" id="pinPad"></div>
+  <button class="pin-bio" id="bioBtn" style="display:none">🔐 Utiliser la biométrie</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="header-brand">
+      <svg class="header-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="hgV" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#5B3A8F"/><stop offset="100%" stop-color="#B8A3DC"/></linearGradient>
+          <linearGradient id="hgR" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F5A9C4"/><stop offset="100%" stop-color="#7B5BB5"/></linearGradient>
+          <linearGradient id="hgVe" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#A8C8A0"/><stop offset="100%" stop-color="#5B3A8F"/></linearGradient>
+        </defs>
+        <path d="M100 30 A70 70 0 1 0 100 170" fill="none" stroke="url(#hgV)" stroke-width="14" stroke-linecap="round"/>
+        <path d="M100 55 A45 45 0 1 1 100 145" fill="none" stroke="url(#hgV)" stroke-width="12" stroke-linecap="round"/>
+        <path d="M100 170 A70 70 0 0 0 165 115" fill="none" stroke="url(#hgR)" stroke-width="14" stroke-linecap="round"/>
+        <path d="M60 100 Q55 75 75 68 Q85 90 70 108 Q62 106 60 100 Z" fill="url(#hgVe)"/>
+      </svg>
+      <span class="header-title">SÉRÉNA</span>
+    </div>
+    <button class="header-btn" onclick="App.openModal('settings')">⚙️</button>
+  </header>
+
+  <!-- ONBOARDING -->
+  <section id="onboarding" class="view active">
+    <div class="onb-step active" data-step="0">
+      <div class="onb-illustration">🌸</div>
+      <h2 class="onb-title">Bienvenue sur SÉRÉNA</h2>
+      <p class="onb-text">Votre compagne bienveillante pour suivre votre santé féminine en toute confidentialité.</p>
+      <button class="btn btn-primary" onclick="App.nextOnb()">Commencer</button>
+    </div>
+    <div class="onb-step" data-step="1">
+      <div class="onb-illustration">🔒</div>
+      <h2 class="onb-title">100% privé</h2>
+      <p class="onb-text">Vos données restent sur votre téléphone. Aucun serveur, aucune pub, aucun tracking. Un PIN protège l'accès.</p>
+      <button class="btn btn-primary" onclick="App.nextOnb()">J'ai compris</button>
+    </div>
+    <div class="onb-step" data-step="2">
+      <div class="onb-illustration">👤</div>
+      <h2 class="onb-title">Votre profil</h2>
+      <div class="form-group"><label class="form-label">Prénom</label><input type="text" id="onbName" class="form-input" placeholder="Ex : Aïcha"></div>
+      <div class="form-group"><label class="form-label">Date de naissance</label><input type="date" id="onbBirth" class="form-input"></div>
+      <button class="btn btn-primary" onclick="App.finishOnb()">Continuer</button>
+    </div>
+    <div class="onb-step" data-step="3">
+      <div class="onb-illustration">💊</div>
+      <h2 class="onb-title">Votre implant</h2>
+      <p class="onb-text">Vous pourrez l'ajouter plus tard.</p>
+      <div class="form-group">
+        <label class="form-label">Type d'implant</label>
+        <select id="onbImplant" class="form-select">
+          <option value="">— Plus tard —</option>
+          <option value="Implanon NXT">Implanon NXT (3 ans)</option>
+          <option value="Nexplanon">Nexplanon (3 ans)</option>
+          <option value="Jadelle">Jadelle (5 ans)</option>
+          <option value="Sino-Implant II">Sino-Implant II (4 ans)</option>
+          <option value="Lévonorgestrel 2 bâtonnets">Lévonorgestrel 2 bâtonnets (5 ans)</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Date de pose</label><input type="date" id="onbImplantDate" class="form-input"></div>
+      <button class="btn btn-primary" onclick="App.finishSetup()">Terminer</button>
+    </div>
+    <div class="onb-step" data-step="4">
+      <div class="onb-illustration">🔐</div>
+      <h2 class="onb-title">Protection par PIN</h2>
+      <p class="onb-text">Choisissez un code à 4 chiffres pour protéger votre intimité.</p>
+      <div class="form-group">
+        <label class="form-label">Code PIN (4 chiffres)</label>
+        <input type="tel" id="onbPin" class="form-input" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="••••">
+      </div>
+      <button class="btn btn-primary" onclick="App.setInitialPin()">Terminer</button>
+    </div>
+    <div class="onb-dots" id="onbDots">
+      <span class="onb-dot active"></span><span class="onb-dot"></span>
+      <span class="onb-dot"></span><span class="onb-dot"></span><span class="onb-dot"></span>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="view-dashboard" class="view">
+    <h1 class="view-title" id="dashGreeting">Bonjour 👋</h1>
+    <p class="view-sub" id="dashDate"></p>
+    <div class="card card-gradient">
+      <div class="card-title">Implant actif</div>
+      <div class="card-value" id="dashImplantDays">—</div>
+      <div class="card-desc" id="dashImplantDesc">Aucun implant enregistré</div>
+    </div>
+    <div class="card card-preg" id="dashPregCard" style="display:none" onclick="App.switchView('pregnancy')">
+      <div class="card-title">🤰 Grossesse</div>
+      <div class="card-value" id="dashPregWeeks">—</div>
+      <div class="card-desc" id="dashPregDpa">—</div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Jour du cycle</div>
+        <div class="card-value" id="dashCycleDay">—</div>
+        <div class="card-desc" id="dashCyclePhase">—</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Prochaines règles</div>
+        <div class="card-value" id="dashNextPeriod">—</div>
+        <div class="card-desc">Estimation</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Période de fécondité</div>
+      <div class="card-value" style="font-size:1.2rem" id="dashFertile">—</div>
+      <div class="card-desc" id="dashFertileDesc"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Actions rapides</div>
+      <div class="mt-12" style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-secondary" onclick="App.quickMarkPeriod()">🩸 Marquer le début des règles</button>
+        <button class="btn btn-secondary" onclick="App.openModal('daily')">📝 Journal du jour</button>
+        <button class="btn btn-secondary" onclick="App.openModal('temperature')">🌡️ Température basale</button>
+        <button class="btn btn-secondary" onclick="App.openModal('logSex')">❤️ Enregistrer un rapport</button>
+      </div>
+    </div>
+    <div class="disclaimer">⚠️ SÉRÉNA est un outil de suivi personnel. Elle ne remplace en aucun cas l'avis d'un professionnel de santé.</div>
+  </section>
+
+  <!-- CALENDRIER -->
+  <section id="view-calendar" class="view">
+    <h1 class="view-title">Mon cycle</h1>
+    <p class="view-sub">Touchez un jour pour le marquer</p>
+    <div class="card">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="App.prevMonth()">‹</button>
+        <div class="cal-month" id="calMonth">—</div>
+        <button class="cal-nav" onclick="App.nextMonth()">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-legend">
+        <span><i class="lg-box" style="background:var(--rose-500)"></i>Règles</span>
+        <span><i class="lg-box" style="background:var(--vert-300)"></i>Fertile</span>
+        <span><i class="lg-box" style="background:var(--vert-500)"></i>Ovulation</span>
+        <span><i class="lg-box" style="background:var(--violet-700);border-radius:50%"></i>Symptômes</span>
+        <span><i class="lg-box" style="background:var(--warn);border-radius:50%"></i>Température</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Résumé du cycle</div>
+      <div class="row-between mt-12"><span>Durée moyenne</span><strong id="sumAvg">—</strong></div>
+      <div class="row-between mt-12"><span>Dernières règles</span><strong id="sumLast">—</strong></div>
+      <div class="row-between mt-12"><span>Régularité</span><strong id="sumReg">—</strong></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Évolution des cycles</div>
+      <canvas id="cycleChart" width="600" height="300" style="max-height:220px;margin-top:10px"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Courbe de température basale</div>
+      <canvas id="tempChart" width="600" height="300" style="max-height:220px;margin-top:10px"></canvas>
+      <div class="form-hint" id="tempHint" style="margin-top:8px"></div>
+    </div>
+    <button class="btn btn-primary" onclick="App.openModal('period')">🩸 Enregistrer / modifier des règles</button>
+  </section>
+
+  <!-- JOURNAL -->
+  <section id="view-journal" class="view">
+    <h1 class="view-title">Mon journal</h1>
+    <p class="view-sub">Suivi quotidien de vos symptômes</p>
+    <button class="btn btn-primary" onclick="App.openModal('daily')">📝 Ajouter l'entrée du jour</button>
+    <div class="card mt-20">
+      <div class="card-title">Derniers 30 jours</div>
+      <canvas id="moodChart" width="600" height="250" style="max-height:180px;margin-top:10px"></canvas>
+    </div>
+    <h2 class="view-title" style="font-size:1.1rem;margin-top:22px">Historique</h2>
+    <div id="journalHistory"></div>
+  </section>
+
+  <!-- GROSSESSE -->
+  <section id="view-pregnancy" class="view">
+    <h1 class="view-title">Ma grossesse</h1>
+    <p class="view-sub">Suivi semaine par semaine</p>
+
+    <div id="pregStartCard" class="card">
+      <div class="card-title">Démarrer un suivi</div>
+      <div class="card-desc">Renseignez la date de vos dernières règles (DDR) ou votre date probable d'accouchement (DPA).</div>
+      <button class="btn btn-primary mt-12" onclick="App.openModal('startPregnancy')">🤰 Démarrer le suivi</button>
+    </div>
+
+    <div id="pregActive" style="display:none">
+      <div class="card card-preg">
+        <div class="card-title">Semaine d'aménorrhée</div>
+        <div class="card-value" id="pregSA">—</div>
+        <div class="card-desc" id="pregTrimester">—</div>
+        <div class="progress-bar"><div class="progress-fill" id="pregProgress" style="width:0%"></div></div>
+        <div class="card-desc" id="pregProgressText" style="margin-top:6px"></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">DPA</div>
+          <div class="card-value" style="font-size:1.3rem" id="pregDpaDate">—</div>
+          <div class="card-desc" id="pregDpaDays">—</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Trimestre</div>
+          <div class="card-value" id="pregTriNum">—</div>
+          <div class="card-desc" id="pregTriDesc">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💡 Conseils de la semaine</div>
+        <div class="card-desc" id="pregTips">—</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📅 Jalons de suivi</div>
+        <div class="timeline mt-12" id="pregMilestones"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🩺 Prochaines consultations</div>
+        <div class="card-desc">Consultez régulièrement votre sage-femme ou médecin :</div>
+        <div class="card-desc">
+          • 1er trimestre : 1 consultation mensuelle<br>
+          • 2e trimestre : 1 consultation par mois<br>
+          • 3e trimestre : 1 consultation tous les 15 jours<br>
+          • + échographies à 12 SA, 22 SA, 32 SA
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Actions</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+          <button class="btn btn-secondary" onclick="App.openModal('contraction')">⏱️ Enregistrer une contraction</button>
+          <button class="btn btn-secondary" onclick="App.openModal('appointment')">📅 Ajouter un RDV</button>
+          <button class="btn btn-outline" onclick="App.endPregnancy()">Arrêter le suivi</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⏱️ Contractions récentes</div>
+        <div id="contractionsList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📅 Mes RDV</div>
+        <div id="appointmentsList"></div>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      ⚠️ Ce suivi ne remplace pas le suivi médical. Consultez impérativement un professionnel de santé.
+    </div>
+  </section>
+
+  <!-- IMPLANT -->
+  <section id="view-implant" class="view">
+    <h1 class="view-title">Mon implant</h1>
+    <p class="view-sub">Suivi et rappels d'expiration</p>
+    <div class="card card-gradient" id="implantActiveCard" style="display:none">
+      <div class="card-title">Implant en cours</div>
+      <div class="card-value" id="implantType" style="font-size:1.3rem">—</div>
+      <div class="card-desc" id="implantDates">—</div>
+      <div class="card-desc" style="font-weight:700;margin-top:8px" id="implantCountdown">—</div>
+    </div>
+    <button class="btn btn-primary" onclick="App.openModal('implant')">➕ Ajouter un implant</button>
+    <h2 class="view-title" style="font-size:1.1rem;margin-top:22px">Historique</h2>
+    <div id="implantHistory"></div>
+  </section>
+
+  <!-- SANTÉ -->
+  <section id="view-health" class="view">
+    <h1 class="view-title">Santé & infos</h1>
+    <p class="view-sub">Tout savoir sur votre santé</p>
+    <div class="card"><div class="card-title">💊 Implanon NXT / Nexplanon</div><div class="card-desc">Durée : 3 ans. Bâtonnet unique sous-cutané, inséré dans le bras. Efficacité > 99%.</div></div>
+    <div class="card"><div class="card-title">💊 Jadelle</div><div class="card-desc">Durée : 5 ans. Deux bâtonnets. Saignements souvent réduits après 6 mois.</div></div>
+    <div class="card"><div class="card-title">💊 Sino-Implant II</div><div class="card-desc">Durée : 4 ans. Deux bâtonnets. Souvent utilisé en santé publique en Afrique.</div></div>
+    <div class="card"><div class="card-title">💊 Lévonorgestrel 2 bâtonnets</div><div class="card-desc">Durée : 5 ans. Générique, très répandu, efficacité comparable.</div></div>
+    <div class="card"><div class="card-title">⚠️ Effets secondaires fréquents</div><div class="card-desc">• Saignements irréguliers (3-6 premiers mois)<br>• Absence de règles possible<br>• Maux de tête, nausées légères<br>• Sensibilité des seins<br>• Variations d'humeur</div></div>
+    <div class="card"><div class="card-title">🚨 Quand consulter en urgence</div><div class="card-desc">• Douleur intense au bras<br>• Saignement abondant persistant<br>• Signes d'infection<br>• Douleur abdominale sévère<br>• Suspicion de grossesse</div></div>
+    <button class="btn btn-secondary" onclick="App.exportPDF()">📤 Générer un rapport PDF pour mon médecin</button>
+    <div class="disclaimer">Ces informations sont générales et ne remplacent pas les conseils de votre professionnel de santé.</div>
+  </section>
+
+  <nav class="bottom">
+    <button class="nav-item active" data-view="dashboard"><span class="ico">🏠</span>Accueil</button>
+    <button class="nav-item" data-view="calendar"><span class="ico">📅</span>Cycle</button>
+    <button class="nav-item" data-view="journal"><span class="ico">📝</span>Journal</button>
+    <button class="nav-item" data-view="pregnancy"><span class="ico">🤰</span>Grossesse</button>
+    <button class="nav-item" data-view="implant"><span class="ico">💊</span>Implant</button>
+    <button class="nav-item" data-view="health"><span class="ico">📖</span>Santé</button>
+  </nav>
+</div>
+
+<div class="modal-bg" id="modalBg" onclick="App.closeModal(event)">
+  <div class="modal" id="modalContent" onclick="event.stopPropagation()"></div>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   SÉRÉNA v2 — Application PWA complète (Vague 1 + Grossesse)
+   ============================================================ */
+const App = (() => {
+
+  const IMPLANTS = {
+    'Implanon NXT':{duree:3},'Nexplanon':{duree:3},'Jadelle':{duree:5},
+    'Sino-Implant II':{duree:4},'Lévonorgestrel 2 bâtonnets':{duree:5}
+  };
+  const LUTEAL = 14, STORAGE_KEY = 'serena_v2_state';
+
+  // Conseils grossesse par semaine (SA)
+  const PREG_TIPS = {
+    '1-4':'Prenez de l\'acide folique (400µg/j). Évitez alcool, tabac, médicaments non prescrits.',
+    '5-8':'Premières nausées possibles. Fractionnez vos repas. Repos essentiel.',
+    '9-12':'Échographie du 1er trimestre à prévoir (11-13 SA). Dépistage trisomie.',
+    '13-16':'Le risque de fausse couche diminue. Vous pouvez annoncer la grossesse.',
+    '17-20':'Échographie morphologique à 22 SA. Premiers mouvements perceptibles.',
+    '21-24':'Pensez à la préparation à la naissance. Surveillez la tension.',
+    '25-28':'Test de dépistage du diabète gestationnel (24-28 SA).',
+    '29-32':'Échographie de croissance. Repos et surveillance des contractions.',
+    '33-36':'Préparation à l\'accouchement. Préparez votre valise maternité.',
+    '37-40':'À terme ! Surveillez les contractions et la perte des eaux.',
+    '41+':'Grossesse prolongée. Surveillance rapprochée recommandée.'
+  };
+
+  let state = {
+    profile: null, implants: [], periods: [], sexLogs: [],
+    dailyLogs: [], temperatures: [], pregnancies: [], contractions: [], appointments: [],
+    settings:{ cycleLength:28, periodLength:5, notifications:false, notifTime:'20:00' },
+    security:{ pinHash:null, biometric:false, lockEnabled:true, autoLock:true }
+  };
+  let currentMonth = new Date();
+  let onbStep = 0;
+  let pinBuffer = '';
+  let pinSetupMode = 'onb'; // 'onb' | 'change' | 'disable'
+
+  // ---------- Persistance ----------
+  const save = () => { try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} };
+  const load = () => {
+    try{ const r = localStorage.getItem(STORAGE_KEY); if(r){ state = Object.assign(state, JSON.parse(r)); return true; } }catch(e){}
+    return false;
+  };
+
+  // ---------- Utils ----------
+  const pad = n => String(n).padStart(2,'0');
+  const toISO = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const fromISO = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+  const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+  const daysBetween = (a,b) => Math.round((b-a)/(1000*60*60*24));
+  const formatShortFR = d => d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+  const formatLongFR = d => d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+
+  // ---------- PIN ----------
+  async function hashPin(pin){
+    const buf = new TextEncoder().encode('serena_salt_' + pin);
+    const hash = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+  async function setPin(pin){
+    state.security.pinHash = await hashPin(pin);
+    save();
+  }
+  async function verifyPin(pin){
+    const h = await hashPin(pin);
+    return h === state.security.pinHash;
+  }
+  async function setInitialPin(){
+    const pin = document.getElementById('onbPin').value.trim();
+    if(!/^\d{4}$/.test(pin)){ toast('Code à 4 chiffres requis'); return; }
+    await setPin(pin);
+    finishSetup();
+  }
+
+  function renderPinPad(){
+    const pad = document.getElementById('pinPad');
+    pad.innerHTML = '';
+    ['1','2','3','4','5','6','7','8','9','','0','⌫'].forEach(k => {
+      const btn = document.createElement('button');
+      btn.className = 'pin-key' + (k === '' ? ' empty' : '');
+      btn.textContent = k;
+      if(k === '') btn.disabled = true;
+      else btn.onclick = () => handlePinKey(k);
+      pad.appendChild(btn);
+    });
+  }
+
+  function updatePinDots(){
+    document.querySelectorAll('#pinDisplay .pin-dot').forEach((d,i) => d.classList.toggle('filled', i < pinBuffer.length));
+  }
+
+  async function handlePinKey(k){
+    if(k === '⌫'){ pinBuffer = pinBuffer.slice(0,-1); updatePinDots(); return; }
+    if(pinBuffer.length >= 4) return;
+    pinBuffer += k; updatePinDots();
+    if(pinBuffer.length === 4){
+      const ok = await verifyPin(pinBuffer);
+      if(ok){ pinBuffer=''; updatePinDots(); unlockApp(); }
+      else {
+        toast('Code incorrect');
+        pinBuffer=''; updatePinDots();
+        if(navigator.vibrate) navigator.vibrate(200);
+      }
+    }
+  }
+
+  function showLockScreen(){
+    if(!state.security.pinHash || !state.security.lockEnabled){
+      document.getElementById('app').classList.add('active');
+      document.querySelector('nav.bottom').style.display = 'flex';
+      switchView('dashboard');
+      renderAll();
+      return;
+    }
+    document.getElementById('lockScreen').classList.add('active');
+    pinBuffer = '';
+    updatePinDots();
+    renderPinPad();
+    // WebAuthn
+    if(state.security.biometric && window.PublicKeyCredential){
+      document.getElementById('bioBtn').style.display = 'block';
+      document.getElementById('bioBtn').onclick = tryBiometric;
+    }
+  }
+
+  async function tryBiometric(){
+    try {
+      if(!window.PublicKeyCredential) { toast('Biométrie non disponible'); return; }
+      const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      if(!available){ toast('Aucune biométrie configurée'); return; }
+      unlockApp();
+      toast('Déverrouillé 🔓');
+    } catch(e){ toast('Biométrie indisponible'); }
+  }
+
+  function unlockApp(){
+    document.getElementById('lockScreen').classList.remove('active');
+    document.getElementById('app').classList.add('active');
+    document.querySelector('nav.bottom').style.display = 'flex';
+    switchView('dashboard');
+    renderAll();
+  }
+
+  // ---------- Métier : Implant ----------
+  const implantExpiration = i => addDays(fromISO(i.datePose), (IMPLANTS[i.type]?.duree || 0) * 365);
+  const implantDaysLeft = i => daysBetween(new Date(), implantExpiration(i));
+  const getActiveImplant = () => {
+    const a = state.implants.filter(i => !i.retire).sort((a,b) => new Date(b.datePose) - new Date(a.datePose));
+    return a[0] || null;
+  };
+
+  // ---------- Métier : Cycle ----------
+  const getSortedPeriods = () => [...state.periods].sort((a,b) => new Date(a.start) - new Date(b.start));
+  const getLastPeriod = () => { const s = getSortedPeriods(); return s[s.length-1] || null; };
+  function getAvgCycle(){
+    const s = getSortedPeriods();
+    if(s.length < 2) return state.settings.cycleLength;
+    const diffs = [];
+    for(let i=1;i<s.length;i++){
+      const d = daysBetween(fromISO(s[i-1].start), fromISO(s[i].start));
+      if(d > 15 && d < 60) diffs.push(d);
+    }
+    return diffs.length ? Math.round(diffs.reduce((a,b)=>a+b,0)/diffs.length) : state.settings.cycleLength;
+  }
+  function getCycleInfo(){
+    const last = getLastPeriod();
+    if(!last) return null;
+    const start = fromISO(last.start);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const cycleLen = getAvgCycle();
+    const dayInCycle = (daysBetween(start, today) % cycleLen) + 1;
+    const nextPeriodStart = addDays(start, cycleLen * Math.ceil((daysBetween(start,today)+1)/cycleLen));
+    const ovulationDay = cycleLen - LUTEAL;
+    const fertileStart = addDays(start, ovulationDay - 5);
+    const fertileEnd = addDays(start, ovulationDay + 1);
+    const ovulationDate = addDays(start, ovulationDay);
+    return {
+      dayInCycle, cycleLen, lastPeriodStart:start, nextPeriodStart, ovulationDate,
+      fertileStart, fertileEnd,
+      isFertile: today >= fertileStart && today <= fertileEnd,
+      phase: dayInCycle <= state.settings.periodLength ? 'Menstruation'
+            : dayInCycle < ovulationDay - 5 ? 'Phase folliculaire'
+            : dayInCycle <= ovulationDay + 1 ? 'Période fertile'
+            : 'Phase lutéale'
+    };
+  }
+  const isPeriodDay = iso => state.periods.some(p => iso >= p.start && iso <= (p.end || p.start));
+
+  // ---------- Métier : Grossesse ----------
+  function getActivePregnancy(){
+    return state.pregnancies.find(p => p.active) || null;
+  }
+  function computePregnancy(preg){
+    const ddr = fromISO(preg.ddr);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const daysSinceDDR = daysBetween(ddr, today);
+    const sa = Math.floor(daysSinceDDR / 7); // semaines d'aménorrhée
+    const daysInSA = daysSinceDDR % 7;
+    const dpa = addDays(ddr, 280); // 40 SA
+    const daysLeft = daysBetween(today, dpa);
+    const progress = Math.min(100, Math.max(0, Math.round((daysSinceDDR / 280) * 100)));
+    const trimester = sa < 14 ? 1 : sa < 28 ? 2 : 3;
+    return { sa, daysInSA, dpa, daysLeft, progress, trimester, daysSinceDDR };
+  }
+  function getPregTip(sa){
+    const ranges = ['1-4','5-8','9-12','13-16','17-20','21-24','25-28','29-32','33-36','37-40','41+'];
+    for(const r of ranges){
+      const [a,b] = r.replace('+','-999').split('-').map(Number);
+      if(sa >= a && sa <= b) return PREG_TIPS[r];
+    }
+    return PREG_TIPS['37-40'];
+  }
+  function getPregMilestones(sa){
+    const ms = [
+      {sa:8, label:'1ère consultation prénatale', desc:'Confirmation, bilan sanguin'},
+      {sa:12, label:'Échographie 1er trimestre', desc:'Datation + clarté nucale (11-13 SA)'},
+      {sa:16, label:'Consultation mensuelle', desc:'Suivi tension, poids, hauteur utérine'},
+      {sa:22, label:'Échographie morphologique', desc:'Examen détaillé des organes'},
+      {sa:24, label:'Dépistage diabète gestationnel', desc:'Test HGPO'},
+      {sa:28, label:'Consultation + injection anti-D si Rh-', desc:'Prévention allo-immunisation'},
+      {sa:32, label:'Échographie de croissance', desc:'Poids, position, liquide amniotique'},
+      {sa:36, label:'Consultation pré-anesthésique', desc:'Préparation accouchement'},
+      {sa:38, label:'Consultation de terme', desc:'Surveillance rapprochée'},
+      {sa:40, label:'DPA — Terme', desc:'Surveillance du travail'}
+    ];
+    return ms.map(m => ({...m, done: sa >= m.sa, upcoming: Math.abs(sa - m.sa) <= 2}));
+  }
+
+  // ---------- Rendus ----------
+  function renderDashboard(){
+    const now = new Date();
+    const h = now.getHours();
+    const greet = h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+    const name = state.profile?.name ? `, ${state.profile.name}` : '';
+    document.getElementById('dashGreeting').textContent = `${greet}${name} 👋`;
+    document.getElementById('dashDate').textContent = now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+    const impl = getActiveImplant();
+    if(impl){
+      const d = implantDaysLeft(impl);
+      document.getElementById('dashImplantDays').innerHTML = d > 0
+        ? `${d}<span class="card-unit">jours</span>` : `<span style="color:#FFE">Expiré !</span>`;
+      document.getElementById('dashImplantDesc').textContent = `${impl.type} — posé le ${formatShortFR(fromISO(impl.datePose))}`;
+    } else {
+      document.getElementById('dashImplantDays').textContent = '—';
+      document.getElementById('dashImplantDesc').textContent = 'Aucun implant enregistré';
+    }
+
+    const preg = getActivePregnancy();
+    const pregCard = document.getElementById('dashPregCard');
+    if(preg){
+      const info = computePregnancy(preg);
+      pregCard.style.display = 'block';
+      document.getElementById('dashPregWeeks').innerHTML = `${info.sa}<span class="card-unit">SA + ${info.daysInSA}j</span>`;
+      document.getElementById('dashPregDpa').textContent = `DPA : ${formatShortFR(info.dpa)} (${info.daysLeft}j)`;
+    } else pregCard.style.display = 'none';
+
+    const ci = getCycleInfo();
+    if(ci && !preg){
+      document.getElementById('dashCycleDay').textContent = `J${ci.dayInCycle}`;
+      document.getElementById('dashCyclePhase').textContent = ci.phase;
+      const jr = daysBetween(new Date(), ci.nextPeriodStart);
+      document.getElementById('dashNextPeriod').innerHTML = jr >= 0 ? `${jr}<span class="card-unit">j</span>` : '—';
+      if(ci.isFertile){
+        document.getElementById('dashFertile').textContent = '🌿 Jour fertile';
+        document.getElementById('dashFertileDesc').textContent = `Du ${formatShortFR(ci.fertileStart)} au ${formatShortFR(ci.fertileEnd)}`;
+      } else {
+        document.getElementById('dashFertile').textContent = 'Hors période fertile';
+        document.getElementById('dashFertileDesc').textContent = `Prochaine : ${formatShortFR(ci.fertileStart)}`;
+      }
+    } else if(preg){
+      document.getElementById('dashCycleDay').textContent = '—';
+      document.getElementById('dashCyclePhase').textContent = 'Grossesse';
+      document.getElementById('dashNextPeriod').textContent = '—';
+      document.getElementById('dashFertile').textContent = '—';
+      document.getElementById('dashFertileDesc').textContent = '';
+    } else {
+      ['dashCycleDay','dashNextPeriod'].forEach(id => document.getElementById(id).textContent = '—');
+      document.getElementById('dashCyclePhase').textContent = 'Aucune donnée';
+      document.getElementById('dashFertile').textContent = '—';
+      document.getElementById('dashFertileDesc').textContent = 'Enregistrez vos règles';
+    }
+  }
+
+  function renderCalendar(){
+    const y = currentMonth.getFullYear(), m = currentMonth.getMonth();
+    const monthName = currentMonth.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    document.getElementById('calMonth').textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+    const firstDay = new Date(y, m, 1);
+    const startDow = (firstDay.getDay() + 6) % 7;
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    const grid = document.getElementById('calGrid');
+    grid.innerHTML = '';
+    ['L','M','M','J','V','S','D'].forEach(d => {
+      const el = document.createElement('div'); el.className = 'cal-dow'; el.textContent = d; grid.appendChild(el);
+    });
+    for(let i=0;i<startDow;i++){
+      const el = document.createElement('div'); el.className = 'cal-day empty'; grid.appendChild(el);
+    }
+    const todayISO = toISO(new Date());
+    const ci = getCycleInfo();
+    for(let d=1; d<=daysInMonth; d++){
+      const date = new Date(y, m, d);
+      const iso = toISO(date);
+      const el = document.createElement('div');
+      el.className = 'cal-day';
+      el.textContent = d;
+      if(iso === todayISO) el.classList.add('today');
+      if(isPeriodDay(iso)) el.classList.add('period');
+      if(ci){
+        const nextISO = toISO(ci.nextPeriodStart);
+        if(iso >= nextISO && iso <= toISO(addDays(ci.nextPeriodStart, state.settings.periodLength-1)))
+          el.classList.add('predicted');
+        if(iso >= toISO(ci.fertileStart) && iso <= toISO(ci.fertileEnd) && !el.classList.contains('period'))
+          el.classList.add('fertile');
+        if(iso === toISO(ci.ovulationDate)) el.classList.add('ovulation');
+      }
+      if(state.dailyLogs.some(l => l.date === iso)) el.classList.add('symptom');
+      if(state.temperatures.some(t => t.date === iso)) el.classList.add('temp');
+      el.onclick = () => toggleDay(iso);
+      grid.appendChild(el);
+    }
+
+    const last = getLastPeriod();
+    document.getElementById('sumAvg').textContent = getAvgCycle() + ' jours';
+    document.getElementById('sumLast').textContent = last ? formatShortFR(fromISO(last.start)) : '—';
+    const sorted = getSortedPeriods();
+    if(sorted.length >= 3){
+      const diffs = [];
+      for(let i=1;i<sorted.length;i++) diffs.push(daysBetween(fromISO(sorted[i-1].start), fromISO(sorted[i].start)));
+      const avg = diffs.reduce((a,b)=>a+b,0)/diffs.length;
+      const ecart = Math.sqrt(diffs.reduce((a,b)=>a+Math.pow(b-avg,2),0)/diffs.length);
+      document.getElementById('sumReg').textContent = ecart < 3 ? 'Très régulier' : ecart < 7 ? 'Régulier' : 'Irrégulier';
+    } else document.getElementById('sumReg').textContent = 'Données insuffisantes';
+
+    drawCycleChart();
+    drawTempChart();
+  }
+
+  function toggleDay(iso){
+    if(isPeriodDay(iso)){
+      state.periods = state.periods.map(p => {
+        if(iso >= p.start && iso <= (p.end || p.start)){
+          if(p.start === iso && (p.end === iso || !p.end)) return null;
+          if(p.start === iso) return { ...p, start: toISO(addDays(fromISO(iso), 1)) };
+          if((p.end||p.start) === iso) return { ...p, end: toISO(addDays(fromISO(iso), -1)) };
+          return [{...p, end: toISO(addDays(fromISO(iso),-1))}, {start: toISO(addDays(fromISO(iso),1)), end: p.end, intensity: p.intensity}];
+        }
+        return p;
+      }).flat().filter(Boolean);
+    } else {
+      const prev = state.periods.find(p => (p.end||p.start) === toISO(addDays(fromISO(iso),-1)));
+      const next = state.periods.find(p => p.start === toISO(addDays(fromISO(iso), 1)));
+      if(prev && next){ prev.end = next.end || next.start; state.periods = state.periods.filter(p => p !== next); }
+      else if(prev) prev.end = iso;
+      else if(next) next.start = iso;
+      else state.periods.push({start: iso, end: iso, intensity: 'medium'});
+    }
+    save(); renderCalendar(); renderDashboard(); toast('Jour mis à jour');
+  }
+
+  // ---------- Charts (canvas natif) ----------
+  function drawCycleChart(){
+    const canvas = document.getElementById('cycleChart');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+    const sorted = getSortedPeriods();
+    if(sorted.length < 2){
+      ctx.fillStyle = '#888'; ctx.font = '16px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('Enregistrez au moins 2 cycles', W/2, H/2);
+      return;
+    }
+    const diffs = [];
+    for(let i=1;i<sorted.length;i++) diffs.push(daysBetween(fromISO(sorted[i-1].start), fromISO(sorted[i].start)));
+    const avg = diffs.reduce((a,b)=>a+b,0)/diffs.length;
+    const padL = 40, padR = 20, padT = 20, padB = 40;
+    const cW = W - padL - padR, cH = H - padT - padB;
+    const maxD = Math.max(...diffs, 35);
+    const minD = Math.min(...diffs, 21);
+    const range = maxD - minD || 1;
+
+    // Grille
+    ctx.strokeStyle = '#EEE'; ctx.lineWidth = 1;
+    for(let i=0;i<=4;i++){
+      const y = padT + (cH/4)*i;
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W-padR, y); ctx.stroke();
+      ctx.fillStyle = '#888'; ctx.font = '11px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(Math.round(maxD - (range/4)*i) + 'j', padL-6, y+4);
+    }
+
+    // Ligne moyenne
+    const avgY = padT + cH - ((avg - minD)/range) * cH;
+    ctx.strokeStyle = '#F5A9C4'; ctx.setLineDash([5,5]); ctx.beginPath();
+    ctx.moveTo(padL, avgY); ctx.lineTo(W-padR, avgY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Points + ligne
+    const stepX = cW / Math.max(diffs.length - 1, 1);
+    ctx.strokeStyle = '#5B3A8F'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    diffs.forEach((d,i) => {
+      const x = padL + i*stepX;
+      const y = padT + cH - ((d - minD)/range) * cH;
+      if(i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    diffs.forEach((d,i) => {
+      const x = padL + i*stepX;
+      const y = padT + cH - ((d - minD)/range) * cH;
+      ctx.fillStyle = '#7B5BB5'; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#2E1B5B'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(d, x, y-10);
+    });
+
+    // Labels X
+    ctx.fillStyle = '#888'; ctx.font = '10px sans-serif';
+    for(let i=0;i<sorted.length;i++){
+      const x = padL + i*stepX;
+      ctx.fillText(formatShortFR(fromISO(sorted[i].start)), x, H-15);
+    }
+  }
+
+  function drawTempChart(){
+    const canvas = document.getElementById('tempChart');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+    const sorted = [...state.temperatures].sort((a,b) => new Date(a.date) - new Date(b.date)).slice(-30);
+    const hint = document.getElementById('tempHint');
+    if(sorted.length < 3){
+      ctx.fillStyle = '#888'; ctx.font = '16px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('Enregistrez 3+ températures', W/2, H/2);
+      if(hint) hint.textContent = 'La température basale se mesure au réveil, avant tout effort.';
+      return;
+    }
+    const temps = sorted.map(t => t.value);
+    const maxT = Math.max(...temps) + 0.1, minT = Math.min(...temps) - 0.1;
+    const range = maxT - minT || 0.5;
+    const padL = 50, padR = 20, padT = 20, padB = 40;
+    const cW = W - padL - padR, cH = H - padT - padB;
+
+    ctx.strokeStyle = '#EEE';
+    for(let i=0;i<=4;i++){
+      const y = padT + (cH/4)*i;
+      ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+      ctx.fillStyle = '#888'; ctx.font = '11px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText((maxT - (range/4)*i).toFixed(1)+'°', padL-6, y+4);
+    }
+    const stepX = cW / Math.max(sorted.length-1, 1);
+    ctx.strokeStyle = '#E85A6E'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    sorted.forEach((t,i) => {
+      const x = padL + i*stepX;
+      const y = padT + cH - ((t.value - minT)/range) * cH;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    sorted.forEach((t,i) => {
+      const x = padL + i*stepX;
+      const y = padT + cH - ((t.value - minT)/range) * cH;
+      ctx.fillStyle = '#F5A9C4'; ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill();
+    });
+
+    // Détection ovulation (hausse soutenue > 0.3°C)
+    if(sorted.length >= 6){
+      const last3 = temps.slice(-3);
+      const prev3 = temps.slice(-6,-3);
+      const avgLast = last3.reduce((a,b)=>a+b,0)/3;
+      const avgPrev = prev3.reduce((a,b)=>a+b,0)/3;
+      if(avgLast - avgPrev > 0.3 && hint){
+        hint.textContent = '🌿 Hausse thermique détectée : ovulation probable il y a 2-3 jours.';
+        hint.style.color = '#3A7A4F';
+      } else if(hint){
+        hint.textContent = 'Pas encore de hausse thermique nette ce cycle.';
+        hint.style.color = '#888';
+      }
+    }
+  }
+
+  function drawMoodChart(){
+    const canvas = document.getElementById('moodChart');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+    const last30 = [];
+    for(let i=29;i>=0;i--) last30.push(toISO(addDays(new Date(), -i)));
+    const data = last30.map(d => {
+      const log = state.dailyLogs.find(l => l.date === d);
+      return log?.mood || 0;
+    });
+    const padL = 30, padR = 15, padT = 15, padB = 25;
+    const cW = W - padL - padR, cH = H - padT - padB;
+    const bw = cW / 30;
+    const moodColors = ['#EEE','#E85A6E','#F0B860','#B8A3DC','#A8C8A0','#6BBF8A'];
+    data.forEach((v,i) => {
+      const x = padL + i*bw;
+      const h = v ? (cH * v / 5) : 3;
+      ctx.fillStyle = v ? moodColors[v] : '#EEE';
+      ctx.fillRect(x+1, padT + cH - h, bw-2, h);
+    });
+    ctx.fillStyle = '#888'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Il y a 30 jours', padL+40, H-5);
+    ctx.fillText("Aujourd'hui", W-padR-40, H-5);
+  }
+
+  // ---------- Journal ----------
+  function renderJournal(){
+    const list = document.getElementById('journalHistory');
+    const sorted = [...state.dailyLogs].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,30);
+    if(!sorted.length){
+      list.innerHTML = `<div class="empty-state"><div class="ico">📝</div>Aucune entrée pour le moment</div>`;
+      drawMoodChart();
+      return;
+    }
+    const moodEmoji = ['','😢','😕','😐','🙂','😄'];
+    const flowLabel = {none:'—', light:'Léger', medium:'Moyen', heavy:'Abondant'};
+    list.innerHTML = sorted.map(l => `
+      <div class="implant-item">
+        <div class="implant-info">
+          <strong>${formatShortFR(fromISO(l.date))} ${l.mood ? moodEmoji[l.mood] : ''}</strong>
+          <small>${l.flow && l.flow !== 'none' ? 'Flux : ' + flowLabel[l.flow] + ' • ' : ''}${(l.symptoms||[]).join(', ') || 'Aucun symptôme'}</small>
+        </div>
+      </div>
+    `).join('');
+    drawMoodChart();
+  }
+
+  // ---------- Grossesse ----------
+  function renderPregnancy(){
+    const preg = getActivePregnancy();
+    const startCard = document.getElementById('pregStartCard');
+    const activeDiv = document.getElementById('pregActive');
+    if(!preg){
+      startCard.style.display = 'block';
+      activeDiv.style.display = 'none';
+      return;
+    }
+    startCard.style.display = 'none';
+    activeDiv.style.display = 'block';
+    const info = computePregnancy(preg);
+    document.getElementById('pregSA').innerHTML = `${info.sa}<span class="card-unit">SA + ${info.daysInSA}j</span>`;
+    document.getElementById('pregTrimester').textContent = `${info.trimester}e trimestre — ${info.daysSinceDDR} jours de grossesse`;
+    document.getElementById('pregProgress').style.width = info.progress + '%';
+    document.getElementById('pregProgressText').textContent = `${info.progress}% — Il reste ${info.daysLeft} jours`;
+    document.getElementById('pregDpaDate').textContent = formatShortFR(info.dpa);
+    document.getElementById('pregDpaDays').textContent = `Dans ${info.daysLeft} jours`;
+    document.getElementById('pregTriNum').textContent = `${info.trimester}/3`;
+    document.getElementById('pregTriDesc').textContent = ['','Premier trimestre','Deuxième trimestre','Troisième trimestre'][info.trimester];
+    document.getElementById('pregTips').textContent = getPregTip(info.sa);
+
+    const ms = getPregMilestones(info.sa);
+    document.getElementById('pregMilestones').innerHTML = ms.map(m => `
+      <div class="tl-item">
+        <span class="tl-dot ${m.done ? 'done' : m.upcoming ? '' : 'upcoming'}"></span>
+        <div class="tl-title">${m.label}</div>
+        <div class="tl-sub">${m.sa} SA • ${m.desc}</div>
+      </div>
+    `).join('');
+
+    // Contractions
+    const ctr = [...state.contractions].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,5);
+    document.getElementById('contractionsList').innerHTML = ctr.length
+      ? ctr.map(c => `<div class="row-between mt-12"><span>${formatShortFR(fromISO(c.date))} ${c.time || ''}</span><strong>${c.duration} min</strong></div>`).join('')
+      : '<div class="card-desc">Aucune contraction enregistrée</div>';
+
+    // RDV
+    const rdv = [...state.appointments].filter(a => new Date(a.date) >= new Date()).sort((a,b) => new Date(a.date) - new Date(b.date)).slice(0,5);
+    document.getElementById('appointmentsList').innerHTML = rdv.length
+      ? rdv.map(a => `<div class="row-between mt-12"><span>${formatShortFR(fromISO(a.date))} ${a.time || ''}</span><strong>${a.label}</strong></div>`).join('')
+      : '<div class="card-desc">Aucun RDV à venir</div>';
+  }
+
+  function endPregnancy(){
+    if(!confirm('Arrêter le suivi de grossesse ?')) return;
+    const preg = getActivePregnancy();
+    if(preg) preg.active = false;
+    save(); renderPregnancy(); renderDashboard();
+    toast('Suivi de grossesse arrêté');
+  }
+
+  // ---------- Implant ----------
+  function renderImplant(){
+    const impl = getActiveImplant();
+    const card = document.getElementById('implantActiveCard');
+    if(impl){
+      card.style.display = 'block';
+      document.getElementById('implantType').textContent = impl.type;
+      const exp = implantExpiration(impl);
+      document.getElementById('implantDates').textContent = `Posé le ${formatShortFR(fromISO(impl.datePose))} • Expire le ${formatShortFR(exp)}`;
+      const days = implantDaysLeft(impl);
+      document.getElementById('implantCountdown').textContent = days > 0
+        ? `⏳ ${days} jours restants` : `⚠️ Expiré depuis ${Math.abs(days)} jours`;
+    } else card.style.display = 'none';
+    const hist = document.getElementById('implantHistory');
+    if(!state.implants.length){
+      hist.innerHTML = `<div class="empty-state"><div class="ico">💊</div>Aucun implant enregistré</div>`;
+      return;
+    }
+    hist.innerHTML = state.implants.sort((a,b) => new Date(b.datePose) - new Date(a.datePose)).map(i => {
+      const exp = implantExpiration(i);
+      const days = implantDaysLeft(i);
+      let badge = 'badge-actif', label = 'Actif';
+      if(i.retire){ badge = 'badge-expire'; label = 'Retiré'; }
+      else if(days < 0){ badge = 'badge-expire'; label = 'Expiré'; }
+      else if(days < 90){ badge = 'badge-bientot'; label = 'Bientôt'; }
+      return `<div class="implant-item">
+        <div class="implant-info"><strong>${i.type}</strong>
+        <small>Pose : ${formatShortFR(fromISO(i.datePose))} • Expire : ${formatShortFR(exp)}</small></div>
+        <span class="implant-badge ${badge}">${label}</span></div>`;
+    }).join('');
+  }
+
+  // ---------- Modales ----------
+  function openModal(type){
+    const bg = document.getElementById('modalBg');
+    const content = document.getElementById('modalContent');
+    let html = '';
+    const today = toISO(new Date());
+
+    if(type === 'implant'){
+      html = `
+        <div class="modal-head"><div class="modal-title">Ajouter un implant</div>
+        <button class="modal-close" onclick="App.closeModal()">✕</button></div>
+        <div class="form-group"><label class="form-label">Type</label>
+          <select id="mImplantType" class="form-select">
+            ${Object.keys(IMPLANTS).map(k => `<option value="${k}">${k} — ${IMPLANTS[k].duree} ans</option>`).join('')}
+          </select></div>
+        <div class="form-group"><label class="form-label">Date de pose</label>
+          <input type="date" id="mImplantDate" class="form-input" value="${today}"></div>
+        <div class="form-group"><label class="form-label">Notes</label>
+          <textarea id="mImplantNote" class="form-textarea"></textarea></div>
+        <button class="btn btn-primary" onclick="App.saveImplant()">Enregistrer</button>`;
+    } else if(type === 'period'){
+      html = `
+        <div class="modal-head"><div class="modal-title">Enregistrer des règles</div>
+        <button class="modal-close" onclick="App.closeModal()">✕</button></div>
+        <div class="form-group"><label class="form-label">Début</label>
+          <input type="date" id="mPeriodStart" class="form-input" value="${today}"></div>
+        <div class="form-group"><label class="form-label">Fin (optionnel)</label>
+          <input type="date" id="mPeriodEnd" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Intensité</label>
+          <div class="pills" id="mIntensity">
+            <button class="pill" data-val="light">Légères</button>
+            <button class="pill selected" data-val="medium">Moyennes</button>
+            <button class="pill" data-val="heavy">Abondantes</button>
+          </div></div>
+        <button class="btn btn-primary" onclick="App.savePeriod()">Enregistrer</button>`;
+    } else if(type === 'logSex'){
+      html = `
+        <div class="modal-head"><div class="modal-title">Enregistrer un rapport</div>
+        <button class="modal-close" onclick="App.closeModal()">✕</button></div>
+        <div class="form-group"><label class="form-label">Date</label>
+          <input type="date" id="mSexDate" class="form-input" value="${today}"></div>
+        <div class="form-group"><label class="form-label">Protection</label>
+          <div class="pills" id="mSexProt">
+            <button class="pill selected" data-val="true">Protégé</button>
+            <button class="pill" data-val="false">Non protégé</button>
+          </div></div>
+        <div class="form-group"><label class="form-label">Note privée</label>
+          <textarea id="mSexNote" class="form-textarea"></textarea></div>
+        <button class="btn btn-primary" onclick="App.saveSex()">Enregistrer</button>`;
+    } else if(type === 'daily'){
+      const existing = state.dailyLogs.find(l => l.date === today) || {};
+      const moodEmoji = ['','😢','😕','😐','🙂','😄'];
+      html = `
+        <div class="modal-head"><div class="modal-title">Journal du jour</div>
+        <button class="modal-close" onclick="App.closeModal()">✕</button></div>
+        <div class="form-group"><label class="form-label">Humeur</label>
+          <div class="pills" id="mMood">
+            ${[1,2,3,4,5].map(v => `<button class="pill emoji ${existing.mood===v?'selected':''}" data-val="${v}">${moodEmoji[v]}</button>`).join('')}
+          </div></div>
+        <div class="form-group"><label class="form-label">Flux</label>
+          <div class="pills" id="mFlow">
+            ${[['none','Aucun'],['light','Léger'],['medium','Moyen'],['heavy','Abondant']].map(([v,l]) => `<button class="pill ${(existing.flow||'none')===v?'selected':''}" data-val="${v}">${l}</button>`).join('')}
+          </div></div>
+        <div class="form-group"><label class="form-label">Symptômes</label>
+          <div class="pills" id="mSymptoms">
+            ${['Crampes','Maux de tête','Seins sensibles','Ballonnements','Fatigue','Nausées','Acné','Dos'].map(s => `<button class="pill ${(existing.symptoms||[]).includes(s)?'selected':''}" data-val="${s}">${s}</button>`).join('')}
+          </div></div>
+        <div class="form-group"><label class="form-label">Énergie (1-5)</label>
+          <div class="pills" id="mEnergy">
+            ${[1,2,3,4,5].map(v => `<button class="pill ${existing.energy===v?'selected':''}" data-val="${v}">${v}</button>`).join('')}
+          </div></div>
+        <div class="form-group"><label class="form-label">Sommeil (1-5)</label>
+          <div class="pills" id="mSleep">
+            ${[1,2,3,4,5].map(v => `<button class="pill ${existing.sleep===v?'selected':''}" data-val="${v}">${v}</button>`).join('')}
+          </div></div>
+        <div class="form-group"><label class="form-label">Libido (1-5)</label>
+          <div class="pills" id="mLibido">
+            ${[1,2,3,4,5].map(v => `<button class="pill ${existing.libido===v?'selected':''}" data-val="${v}">${v}</button>`).join('')}
+          </div></div>
+        <div class="form-group"><label class="form-label">Notes</label>
+          <textarea id="mNotes" class="form-textarea">${existing.notes||''}</textarea></div>
+        <button class="btn btn-primary" onclick="App.saveDaily()">Enregistrer</button>`;
+    } else if(type === 'temperature'){
+      const existing = state.temperatures.find(t => t.date === today);
+      html = `
+        <div class="modal-head"><div class="modal-title">Température basale</div>
+        <button class="modal-close" onclick="App.closeModal()">✕</button></div>
+        <div class="form-group"><label class="form-label">Date</label>
+          <input type="date" id="mTempDate" class="form-input" value="${today}"></div>
+        <div class="form-group"><label class="form-label">Température (°C)</label>
+          <input type="number" id="mTempValue" class="form-input" step="0.05" min="35" max="40" value="${existing?.value || 36.5}" inputmode="decimal"></div>
+        <div class="form-hint">Mesurez au réveil, avant tout effort, à la même heure chaque jour.</div>
+        <button class="btn btn-primary mt-12" onclick="App.saveTemperature()">Enregistrer</button>`;
+    } else if(type === 'startPregnancy'){
+      html = `
+        <div class="modal-head"><div class="modal-title">Démarrer le suivi</div>
+        <button class="modal-close" onclick="App.closeModal()">✕</button></div>
+        <div class="form-group"><label class="form-label">Date des dernières règles (DDR)</label>
+          <input type="date" id="mPregDdr" class="form-input" value="${toISO(addDays(new Date(), -60))}"></div>
+        <div class="form-hint">La DPA sera calculée : DDR + 280 jours (règle de Naegele).</div>
+        <button class="btn btn-primary mt-12" onclick="App.savePregnancy()">Démarrer</button>`;
+    } else if(type === 'contraction'){
+      html = `
+        <div class="modal-head"><div class="modal-title">Enregistrer une contraction</div>
+        <button class="modal-close" onclick="App.closeModal()">✕</button></div>
+        <div class="form-group"><label class="form-label">Date</label>
+          <input type="date" id="mCtrDate" class="form-input" value="${today}"></div>
+        <div class="form-group"><label class="form-label">Heure</label>
+          <input type="time" id="mCtrTime" class="form-input" value="${new Date().toTimeString().slice(0,5)}"></div>
+        <div class="form-group"><label class="form-label">Durée (minutes)</label>
+          <input type="number" id="mCtrDuration" class="form-input" step="0.5" min="0.5" value="1" inputmode="decimal"></div>
+        <button class="btn btn-primary" onclick="App.saveContraction()">Enregistrer</button>`;
+    } else if(type === 'appointment'){
+      html = `
+        <div class="modal-head"><div class="modal-title">Ajouter un RDV</div>
+        <button class="modal-close" onclick="App.closeModal()">✕</button></div>
+        <div class="form-group"><label class="form-label">Libellé</label>
+          <input type="text" id="mAptLabel" class="form-input" placeholder="Ex : Échographie T2"></div>
+        <div class="form-group"><label class="form-label">Date</label>
+          <input type="date" id="mAptDate" class="form-input" value="${today}"></div>
+        <div class="form-group"><label class="form-label">Heure</label>
+          <input type="time" id="mAptTime" class="form-input" value="10:00"></div>
+        <button class="btn btn-primary" onclick="App.saveAppointment()">Enregistrer</button>`;
+    } else if(type === 'settings'){
+      html = `
+        <div class="modal-head"><div class="modal-title">Paramètres</div>
+        <button class="modal-close" onclick="App.closeModal()">✕</button></div>
+        <div class="form-group"><label class="form-label">Durée du cycle (jours)</label>
+          <input type="number" id="mCycleLen" class="form-input" value="${state.settings.cycleLength}" min="20" max="45"></div>
+        <div class="form-group"><label class="form-label">Durée des règles (jours)</label>
+          <input type="number" id="mPeriodLen" class="form-input" value="${state.settings.periodLength}" min="1" max="10"></div>
+        <div class="form-group"><label class="form-label">Heure du rappel quotidien</label>
+          <input type="time" id="mNotifTime" class="form-input" value="${state.settings.notifTime}"></div>
+        <button class="btn btn-primary" onclick="App.saveSettings()">Enregistrer</button>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+          <button class="btn btn-outline" onclick="App.openModal('changePin')">🔑 Changer le PIN</button>
+          <button class="btn btn-outline" onclick="App.exportData()">📤 Exporter (JSON)</button>
+          <button class="btn btn-outline" onclick="App.exportPDF()">📄 Rapport PDF médecin</button>
+          <button class="btn btn-outline" onclick="App.notifPermission()">🔔 Activer les notifications</button>
+          <button class="btn btn-danger" onclick="App.resetAll()">🗑️ Tout effacer</button>
+        </div>
+        <div class="disclaimer">SÉRÉNA ne collecte aucune donnée. Tout reste sur votre appareil.</div>`;
+    } else if(type === 'changePin'){
+      html = `
+        <div class="modal-head"><div class="modal-title">Changer le PIN</div>
+        <button class="modal-close" onclick="App.closeModal()">✕</button></div>
+        <div class="form-group"><label class="form-label">PIN actuel</label>
+          <input type="tel" id="mOldPin" class="form-input" inputmode="numeric" maxlength="4" placeholder="••••"></div>
+        <div class="form-group"><label class="form-label">Nouveau PIN</label>
+          <input type="tel" id="mNewPin" class="form-input" inputmode="numeric" maxlength="4" placeholder="••••"></div>
+        <button class="btn btn-primary" onclick="App.changePin()">Changer</button>`;
+    }
+
+    content.innerHTML = html;
+    bg.classList.add('active');
+
+    // Pills handlers (single + multi)
+    content.querySelectorAll('.pills').forEach(group => {
+      const isMulti = group.id === 'mSymptoms';
+      group.querySelectorAll('.pill').forEach(p => {
+        p.onclick = () => {
+          if(isMulti) p.classList.toggle('selected');
+          else {
+            group.querySelectorAll('.pill').forEach(x => x.classList.remove('selected'));
+            p.classList.add('selected');
+          }
+        };
+      });
+    });
+  }
+
+  function closeModal(e){
+    if(e && e.target !== document.getElementById('modalBg')) return;
+    document.getElementById('modalBg').classList.remove('active');
+  }
+
+  // ---------- Sauvegardes ----------
+  function saveImplant(){
+    const type = document.getElementById('mImplantType').value;
+    const datePose = document.getElementById('mImplantDate').value;
+    const note = document.getElementById('mImplantNote').value;
+    if(!datePose){ toast('Date requise'); return; }
+    state.implants.push({type, datePose, note, retire:false});
+    save(); closeModal(); renderImplant(); renderDashboard();
+    toast('Implant enregistré ✅');
+  }
+  function savePeriod(){
+    const start = document.getElementById('mPeriodStart').value;
+    const end = document.getElementById('mPeriodEnd').value || start;
+    const intensity = document.querySelector('#mIntensity .selected')?.dataset.val || 'medium';
+    if(!start){ toast('Date requise'); return; }
+    state.periods.push({start, end, intensity});
+    save(); closeModal(); renderCalendar(); renderDashboard();
+    toast('Règles enregistrées ✅');
+  }
+  function saveSex(){
+    const date = document.getElementById('mSexDate').value;
+    const prot = document.querySelector('#mSexProt .selected')?.dataset.val === 'true';
+    const note = document.getElementById('mSexNote').value;
+    state.sexLogs.push({date, protected:prot, note});
+    save(); closeModal(); toast('Enregistré 🔒');
+  }
+  function saveDaily(){
+    const today = toISO(new Date());
+    const mood = parseInt(document.querySelector('#mMood .selected')?.dataset.val) || null;
+    const flow = document.querySelector('#mFlow .selected')?.dataset.val || 'none';
+    const symptoms = Array.from(document.querySelectorAll('#mSymptoms .pill.selected')).map(p => p.dataset.val);
+    const energy = parseInt(document.querySelector('#mEnergy .selected')?.dataset.val) || null;
+    const sleep = parseInt(document.querySelector('#mSleep .selected')?.dataset.val) || null;
+    const libido = parseInt(document.querySelector('#mLibido .selected')?.dataset.val) || null;
+    const notes = document.getElementById('mNotes').value;
+    const idx = state.dailyLogs.findIndex(l => l.date === today);
+    const entry = {date:today, mood, flow, symptoms, energy, sleep, libido, notes};
+    if(idx >= 0) state.dailyLogs[idx] = entry; else state.dailyLogs.push(entry);
+    save(); closeModal(); renderJournal(); renderCalendar(); renderDashboard();
+    toast('Journal enregistré 📝');
+  }
+  function saveTemperature(){
+    const date = document.getElementById('mTempDate').value;
+    const value = parseFloat(document.getElementById('mTempValue').value);
+    if(!date || !value || value < 34 || value > 42){ toast('Valeur invalide'); return; }
+    const idx = state.temperatures.findIndex(t => t.date === date);
+    if(idx >= 0) state.temperatures[idx].value = value;
+    else state.temperatures.push({date, value});
+    save(); closeModal(); renderCalendar();
+    toast('Température enregistrée 🌡️');
+  }
+  function savePregnancy(){
+    const ddr = document.getElementById('mPregDdr').value;
+    if(!ddr){ toast('Date requise'); return; }
+    state.pregnancies.forEach(p => p.active = false);
+    state.pregnancies.push({ddr, active:true, startedAt: toISO(new Date())});
+    save(); closeModal(); renderPregnancy(); renderDashboard();
+    toast('Suivi de grossesse démarré 🤰');
+  }
+  function saveContraction(){
+    const date = document.getElementById('mCtrDate').value;
+    const time = document.getElementById('mCtrTime').value;
+    const duration = parseFloat(document.getElementById('mCtrDuration').value);
+    state.contractions.push({date, time, duration});
+    save(); closeModal(); renderPregnancy();
+    toast('Contraction enregistrée');
+  }
+  function saveAppointment(){
+    const label = document.getElementById('mAptLabel').value.trim();
+    const date = document.getElementById('mAptDate').value;
+    const time = document.getElementById('mAptTime').value;
+    if(!label || !date){ toast('Champs requis'); return; }
+    state.appointments.push({label, date, time});
+    save(); closeModal(); renderPregnancy();
+    toast('RDV ajouté 📅');
+  }
+  function saveSettings(){
+    state.settings.cycleLength = parseInt(document.getElementById('mCycleLen').value) || 28;
+    state.settings.periodLength = parseInt(document.getElementById('mPeriodLen').value) || 5;
+    state.settings.notifTime = document.getElementById('mNotifTime').value || '20:00';
+    save(); closeModal(); renderDashboard(); renderCalendar();
+    toast('Paramètres enregistrés');
+  }
+  async function changePin(){
+    const oldPin = document.getElementById('mOldPin').value;
+    const newPin = document.getElementById('mNewPin').value;
+    if(!/^\d{4}$/.test(newPin)){ toast('Nouveau PIN : 4 chiffres'); return; }
+    if(!await verifyPin(oldPin)){ toast('PIN actuel incorrect'); return; }
+    await setPin(newPin);
+    toast('PIN changé ✅');
+    closeModal();
+  }
+  function exportData(){
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `serena-backup-${toISO(new Date())}.json`;
+    a.click(); URL.revokeObjectURL(url);
+    toast('Exporté 📤');
+  }
+  function resetAll(){
+    if(!confirm('Effacer TOUTES vos données ?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+
+  // ---------- PDF ----------
+  function exportPDF(){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const violet = [91,58,143];
+    let y = 20;
+
+    doc.setFillColor(...violet);
+    doc.rect(0, 0, 210, 30, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    doc.text('SÉRÉNA — Rapport de santé', 105, 15, {align:'center'});
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text('Document à usage médical — ' + formatLongFR(new Date()), 105, 24, {align:'center'});
+
+    y = 45;
+    doc.setTextColor(...violet);
+    doc.setFontSize(14); doc.setFont(undefined, 'bold');
+    doc.text('Informations patiente', 14, y); y += 8;
+    doc.setTextColor(50,50,50); doc.setFontSize(10); doc.setFont(undefined, 'normal');
+    doc.text(`Prénom : ${state.profile?.name || '—'}`, 14, y); y += 6;
+    if(state.profile?.birth){ doc.text(`Date de naissance : ${state.profile.birth}`, 14, y); y += 6; }
+
+    y += 4;
+    doc.setTextColor(...violet); doc.setFontSize(14); doc.setFont(undefined, 'bold');
+    doc.text('Implant contraceptif', 14, y); y += 8;
+    doc.setTextColor(50,50,50); doc.setFontSize(10); doc.setFont(undefined, 'normal');
+    const impl = getActiveImplant();
+    if(impl){
+      doc.text(`Type : ${impl.type}`, 14, y); y += 6;
+      doc.text(`Date de pose : ${formatLongFR(fromISO(impl.datePose))}`, 14, y); y += 6;
+      doc.text(`Date d'expiration : ${formatLongFR(implantExpiration(impl))}`, 14, y); y += 6;
+      const d = implantDaysLeft(impl);
+      doc.text(`Statut : ${d > 0 ? d + ' jours restants' : 'EXPIRÉ depuis ' + Math.abs(d) + ' jours'}`, 14, y); y += 6;
+    } else { doc.text('Aucun implant enregistré', 14, y); y += 6; }
+
+    y += 4;
+    doc.setTextColor(...violet); doc.setFontSize(14); doc.setFont(undefined, 'bold');
+    doc.text('Cycles menstruels récents', 14, y); y += 8;
+    doc.setTextColor(50,50,50); doc.setFontSize(10); doc.setFont(undefined, 'normal');
+    const sorted = getSortedPeriods().slice(-6);
+    if(sorted.length){
+      sorted.forEach(p => {
+        doc.text(`• Du ${formatShortFR(fromISO(p.start))} au ${formatShortFR(fromISO(p.end || p.start))} (${p.intensity})`, 14, y); y += 5;
+      });
+      doc.text(`Durée moyenne du cycle : ${getAvgCycle()} jours`, 14, y); y += 6;
+    } else { doc.text('Aucune donnée de cycle', 14, y); y += 6; }
+
+    y += 4;
+    doc.setTextColor(...violet); doc.setFontSize(14); doc.setFont(undefined, 'bold');
+    doc.text('Grossesse', 14, y); y += 8;
+    doc.setTextColor(50,50,50); doc.setFontSize(10); doc.setFont(undefined, 'normal');
+    const preg = getActivePregnancy();
+    if(preg){
+      const info = computePregnancy(preg);
+      doc.text(`DDR : ${formatLongFR(fromISO(preg.ddr))}`, 14, y); y += 6;
+      doc.text(`Terme actuel : ${info.sa} SA + ${info.daysInSA} jours (${info.trimester}e trimestre)`, 14, y); y += 6;
+      doc.text(`DPA : ${formatLongFR(info.dpa)}`, 14, y); y += 6;
+    } else { doc.text('Aucune grossesse en cours', 14, y); y += 6; }
+
+    y += 4;
+    doc.setTextColor(...violet); doc.setFontSize(14); doc.setFont(undefined, 'bold');
+    doc.text('Températures basales récentes', 14, y); y += 8;
+    doc.setTextColor(50,50,50); doc.setFontSize(10); doc.setFont(undefined, 'normal');
+    const temps = [...state.temperatures].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,10);
+    if(temps.length){
+      temps.forEach(t => { doc.text(`• ${formatShortFR(fromISO(t.date))} : ${t.value}°C`, 14, y); y += 5; if(y > 270){ doc.addPage(); y = 20; } });
+    } else { doc.text('Aucune donnée', 14, y); y += 6; }
+
+    y += 8;
+    doc.setTextColor(150,150,150); doc.setFontSize(8);
+    doc.text('Ce rapport est généré par SÉRÉNA, outil de suivi personnel. Ne remplace pas un diagnostic médical.', 105, 285, {align:'center', maxWidth:180});
+
+    doc.save(`serena-rapport-${toISO(new Date())}.pdf`);
+    toast('PDF généré 📄');
+  }
+
+  // ---------- Onboarding ----------
+  function nextOnb(){
+    const steps = document.querySelectorAll('.onb-step');
+    steps[onbStep].classList.remove('active');
+    onbStep = Math.min(onbStep+1, steps.length-1);
+    steps[onbStep].classList.add('active');
+    document.querySelectorAll('.onb-dot').forEach((d,i) => d.classList.toggle('active', i === onbStep));
+  }
+  function finishOnb(){
+    const name = document.getElementById('onbName').value.trim();
+    const birth = document.getElementById('onbBirth').value;
+    if(!name){ toast('Entrez votre prénom'); return; }
+    state.profile = {name, birth};
+    save(); nextOnb();
+  }
+  function finishSetup(){
+    const type = document.getElementById('onbImplant').value;
+    const date = document.getElementById('onbImplantDate').value;
+    if(type && date) state.implants.push({type, datePose:date, retire:false});
+    save();
+    document.getElementById('onboarding').classList.remove('active');
+    document.querySelector('nav.bottom').style.display = 'flex';
+    switchView('dashboard');
+    renderAll();
+    scheduleNotifications();
+    toast('Bienvenue sur SÉRÉNA ✨');
+  }
+
+  // ---------- Navigation ----------
+  function switchView(name){
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name)?.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === name));
+    if(name === 'dashboard') renderDashboard();
+    if(name === 'calendar') renderCalendar();
+    if(name === 'journal') renderJournal();
+    if(name === 'pregnancy') renderPregnancy();
+    if(name === 'implant') renderImplant();
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  function renderAll(){
+    renderDashboard(); renderCalendar(); renderJournal(); renderPregnancy(); renderImplant();
+  }
+  function prevMonth(){ currentMonth.setMonth(currentMonth.getMonth()-1); renderCalendar(); }
+  function nextMonth(){ currentMonth.setMonth(currentMonth.getMonth()+1); renderCalendar(); }
+  function quickMarkPeriod(){
+    const today = toISO(new Date());
+    if(!isPeriodDay(today)){
+      state.periods.push({start:today, end:today, intensity:'medium'});
+      save(); renderDashboard(); renderCalendar();
+      toast('Début des règles marqué 🩸');
+    } else toast('Déjà marqué aujourd\'hui');
+  }
+
+  // ---------- Notifications ----------
+  async function notifPermission(){
+    if(!('Notification' in window)){ toast('Non supporté'); return; }
+    const p = await Notification.requestPermission();
+    if(p === 'granted'){
+      state.settings.notifications = true; save();
+      toast('Notifications activées 🔔');
+      try{ new Notification('SÉRÉNA', {body:'Vous recevrez des rappels pour votre implant.'}); }catch(e){}
+      scheduleNotifications();
+    } else toast('Permission refusée');
+  }
+  function scheduleNotifications(){
+    const impl = getActiveImplant();
+    if(impl && state.settings.notifications){
+      const days = implantDaysLeft(impl);
+      [90,30,7,1].forEach(s => {
+        if(days <= s && days > s - 2){
+          try{ new Notification('SÉRÉNA — Rappel implant', {body:`Votre implant expire dans ${days} jours.`}); }catch(e){}
+        }
+      });
+    }
+    // Rappel quotidien (si app ouverte — un vrai push nécessite un serveur)
+    if(state.settings.notifications){
+      const now = new Date();
+      const [h, m] = state.settings.notifTime.split(':').map(Number);
+      const target = new Date(); target.setHours(h, m, 0, 0);
+      if(now < target){
+        setTimeout(() => {
+          try{ new Notification('SÉRÉNA', {body:'Pensez à remplir votre journal du jour 📝'}); }catch(e){}
+        }, target - now);
+      }
+    }
+  }
+
+  // ---------- Toast ----------
+  let toastTimer;
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  // ---------- Init ----------
+  function init(){
+    const loaded = load();
+    document.querySelectorAll('.nav-item').forEach(n => n.onclick = () => switchView(n.dataset.view));
+
+    // Manifest PWA
+    const manifest = {
+      name:"SÉRÉNA — Santé Féminine", short_name:"SÉRÉNA",
+      description:"Suivi bienveillant de votre santé féminine",
+      start_url:".", scope:".", display:"standalone", orientation:"portrait",
+      background_color:"#FDF0F5", theme_color:"#5B3A8F", lang:"fr",
+      categories:["health","medical","lifestyle"],
+      icons:[{
+        src:"data:image/svg+xml;utf8," + encodeURIComponent(document.querySelector('#splash svg').outerHTML),
+        sizes:"512x512", type:"image/svg+xml", purpose:"any maskable"
+      }]
+    };
+    const mBlob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
+    const link = document.createElement('link');
+    link.rel = 'manifest'; link.href = URL.createObjectURL(mBlob);
+    document.head.appendChild(link);
+
+    // Service Worker
+    if('serviceWorker' in navigator && location.protocol !== 'file:'){
+      const swCode = `const CACHE='serena-v2';
+        self.addEventListener('install',e=>self.skipWaiting());
+        self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
+        self.addEventListener('fetch',e=>{
+          if(e.request.method!=='GET')return;
+          e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{
+            if(res&&res.status===200&&res.type==='basic'){
+              const c=res.clone(); caches.open(CACHE).then(k=>k.put(e.request,c));
+            }
+            return res;
+          }).catch(()=>caches.match('./index.html'))));
+        });`;
+      const swBlob = new Blob([swCode], {type:'application/javascript'});
+      navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+    }
+
+    setTimeout(() => {
+      document.getElementById('splash').classList.add('hidden');
+      document.getElementById('app').classList.add('active');
+      if(loaded && state.profile && state.security.pinHash){
+        document.getElementById('onboarding').classList.remove('active');
+        document.querySelector('nav.bottom').style.display = 'none';
+        showLockScreen();
+      } else if(loaded && state.profile){
+        document.getElementById('onboarding').classList.remove('active');
+        document.querySelector('nav.bottom').style.display = 'flex';
+        switchView('dashboard');
+        renderAll();
+      } else {
+        document.getElementById('onboarding').classList.add('active');
+        document.querySelector('nav.bottom').style.display = 'none';
+      }
+    }, 1800);
+  }
+
+  return {
+    init, nextOnb, finishOnb, finishSetup, setInitialPin,
+    openModal, closeModal,
+    saveImplant, savePeriod, saveSex, saveDaily, saveTemperature,
+    savePregnancy, saveContraction, saveAppointment, saveSettings, changePin,
+    exportData, exportPDF, resetAll, notifPermission,
+    prevMonth, nextMonth, quickMarkPeriod, switchView,
+    endPregnancy
+  };
+})();
+
+document.addEventListener('DOMContentLoaded', App.init);
+</script>
+</body>
+</html>

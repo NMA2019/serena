@@ -1,0 +1,120 @@
+{
+    "name": "SERENA — Suivi personnel de santé",
+    "short_name": "SERENA",
+    "description": "Comprendre son corps. Anticiper. Prendre soin de soi. Suivi du cycle, fertilité, grossesse, contraception.",
+    "lang": "fr",
+    "dir": "ltr",
+    "start_url": "./serena.html",
+    "scope": "./",
+    "id": "serena-health-tracker",
+    "display": "standalone",
+    "display_override": ["standalone", "minimal-ui", "browser"],
+    "orientation": "portrait-primary",
+    "background_color": "#F7F5FA",
+    "theme_color": "#4A2B7A",
+    "categories": ["health", "medical", "lifestyle", "utilities"],
+    "prefer_related_applications": false,
+    "icons": [
+      {
+        "src": "./assets/icon-192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any"
+      },
+      {
+        "src": "./assets/icon-512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any"
+      },
+      {
+        "src": "./assets/icon-512-maskable.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "maskable"
+      },
+      {
+        "src": "./assets/logo.svg",
+        "sizes": "any",
+        "type": "image/svg+xml",
+        "purpose": "any"
+      }
+    ],
+    "screenshots": [
+      {
+        "src": "./assets/screenshot-mobile-1.png",
+        "sizes": "540x720",
+        "type": "image/png",
+        "form_factor": "narrow",
+        "label": "Tableau de bord SERENA"
+      },
+      {
+        "src": "./assets/screenshot-mobile-2.png",
+        "sizes": "540x720",
+        "type": "image/png",
+        "form_factor": "narrow",
+        "label": "Calendrier du cycle"
+      },
+      {
+        "src": "./assets/screenshot-desktop-1.png",
+        "sizes": "1280x720",
+        "type": "image/png",
+        "form_factor": "wide",
+        "label": "Tableau de bord sur ordinateur"
+      }
+    ],
+    "shortcuts": [
+      {
+        "name": "Journal du jour",
+        "short_name": "Journal",
+        "description": "Ajouter l'entrée du jour",
+        "url": "./index.html#journal",
+        "icons": [{ "src": "./assets/icon-192.png", "sizes": "192x192" }]
+      },
+      {
+        "name": "Température basale",
+        "short_name": "Température",
+        "description": "Enregistrer la température du matin",
+        "url": "./index.html#temperature",
+        "icons": [{ "src": "./assets/icon-192.png", "sizes": "192x192" }]
+      },
+      {
+        "name": "Marquer les règles",
+        "short_name": "Règles",
+        "description": "Enregistrer le début des règles",
+        "url": "./index.html#calendar",
+        "icons": [{ "src": "./assets/icon-192.png", "sizes": "192x192" }]
+      },
+      {
+        "name": "Grossesse",
+        "short_name": "Grossesse",
+        "description": "Suivi de grossesse",
+        "url": "./index.html#pregnancy",
+        "icons": [{ "src": "./assets/icon-192.png", "sizes": "192x192" }]
+      }
+    ],
+    "share_target": {
+      "action": "./index.html",
+      "method": "GET",
+      "enctype": "application/x-www-form-urlencoded",
+      "params": {
+        "title": "title",
+        "text": "text",
+        "url": "url"
+      }
+    },
+    "protocol_handlers": [
+      {
+        "protocol": "web+serena",
+        "url": "./index.html?action=%s"
+      }
+    ],
+    "launch_handler": {
+      "client_mode": "navigate-existing"
+    },
+    "edge_side_panel": {
+      "preferred_width": 480
+    },
+    "iarc_rating_id": "",
+    "related_applications": []
+  }
