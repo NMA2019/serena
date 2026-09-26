@@ -1,11 +1,11 @@
 {
-  "id": "./serena.html",
+  "id": "./index.html",
   "name": "SERENA — Suivi personnel de santé",
   "short_name": "SERENA",
   "description": "Comprendre son corps. Anticiper. Prendre soin de soi. Suivi du cycle, fertilité, grossesse, contraception.",
   "lang": "fr",
   "dir": "ltr",
-  "start_url": "./serena.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "display_override": [
@@ -42,7 +42,7 @@
       "name": "Journal du jour",
       "short_name": "Journal",
       "description": "Ajouter l'entrée du jour",
-      "url": "./serena.html#journal",
+      "url": "./index.html#journal",
       "icons": [
         {
           "src": "./assets/web-app-manifest-192x192.png",
@@ -55,7 +55,7 @@
       "name": "Température basale",
       "short_name": "Température",
       "description": "Enregistrer la température du matin",
-      "url": "./serena.html#temperature",
+      "url": "./index.html#temperature",
       "icons": [
         {
           "src": "./assets/web-app-manifest-192x192.png",
@@ -68,7 +68,7 @@
       "name": "Marquer les règles",
       "short_name": "Règles",
       "description": "Enregistrer le début des règles",
-      "url": "./serena.html#calendar",
+      "url": "./index.html#calendar",
       "icons": [
         {
           "src": "./assets/web-app-manifest-192x192.png",
@@ -81,7 +81,7 @@
       "name": "Grossesse",
       "short_name": "Grossesse",
       "description": "Suivi de grossesse",
-      "url": "./serena.html#pregnancy",
+      "url": "./index.html#pregnancy",
       "icons": [
         {
           "src": "./assets/web-app-manifest-192x192.png",
@@ -92,7 +92,7 @@
     }
   ],
   "share_target": {
-    "action": "./serena.html",
+    "action": "./index.html",
     "method": "GET",
     "enctype": "application/x-www-form-urlencoded",
     "params": {
@@ -104,7 +104,7 @@
   "protocol_handlers": [
     {
       "protocol": "web+serena",
-      "url": "./serena.html?action=%s"
+      "url": "./index.html?action=%s"
     }
   ],
   "launch_handler": {

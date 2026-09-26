@@ -8,7 +8,7 @@
    
    /* Ressources à précacher (App Shell) */
    const PRECACHE_URLS = [
-  './serena.html',
+  './index.html',
   './styles.css',
   './app.js',
   './manifest.json',
@@ -82,7 +82,7 @@
      /* --- Stratégie 1 : App Shell (HTML, manifest, icônes) → cache-first --- */
      const isAppShell =
        url.pathname.endsWith('/') ||
-       url.pathname.endsWith('/serena.html') ||
+       url.pathname.endsWith('/index.html') ||
        url.pathname.endsWith('/manifest.json') ||
        url.pathname.match(/\.(svg|png|ico|webp|jpg|jpeg)$/i);
    
@@ -123,7 +123,7 @@
        /* Réseau indisponible : sert le cache même expiré, ou fallback index */
        if (cached) return cached;
        if (request.mode === 'navigate') {
-         const fallback = await cache.match('./serena.html');
+         const fallback = await cache.match('./index.html');
          if (fallback) return fallback;
        }
        return new Response('Hors-ligne', {
@@ -232,7 +232,7 @@
    self.addEventListener('notificationclick', (event) => {
      event.notification.close();
    
-     const targetUrl = (event.notification.data && event.notification.data.url) || './serena.html';
+     const targetUrl = (event.notification.data && event.notification.data.url) || './index.html';
    
      event.waitUntil(
        self.clients.matchAll({ type: 'window', includeUncontrolled: true })

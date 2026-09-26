@@ -1,1664 +1,185 @@
 <!DOCTYPE html>
-<!--
-  SERENA — Suivi personnel de santé (cycle, fertilité, grossesse)
-  Version: 1.0.0
-  Architecture: fichier unique index.html (HTML+CSS+JS), aucune dépendance externe,
-  aucun framework, stockage 100% local (IndexedDB + localStorage pour préférences non sensibles).
-  Fonctionnalités: onboarding, dashboard, calendrier, cycle, fertilité (estimations),
-  température basale (canvas), journal quotidien (canvas), activité sexuelle, implant,
-  grossesse (SA/DPA/trimestre), journal grossesse, contractions, rendez-vous, rappels,
-  export PDF (impression), export/import JSON, sécurité PIN (Web Crypto), WebAuthn si dispo,
-  i18n FR/EN, thème Light/Dark/Système, PWA (manifest dynamique, tentative Service Worker),
-  données de démonstration, auto-tests internes.
-  Prérequis navigateur: navigateur moderne (Chrome/Edge/Firefox/Safari récents).
-  Limites PWA mono-fichier: le Service Worker et le manifest sont générés dynamiquement via
-  Blob URL; certains navigateurs interdisent l'enregistrement d'un SW depuis un Blob — dans ce
-  cas le mode offline avancé n'est pas garanti, mais l'application reste utilisable et les
-  données restent locales. WebAuthn/Notification/SW nécessitent un contexte sécurisé (HTTPS
-  ou localhost). Lancement: ouvrir ce fichier dans un navigateur, ou le servir en HTTPS pour
-  activer toutes les fonctions PWA.
-  Ce document ne constitue pas un dispositif médical. SERENA ne diagnostique rien.
--->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#7C3AED">
+<meta name="theme-color" content="#4A2B7A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SERENA">
 <meta name="description" content="SERENA — Comprendre son corps. Anticiper. Prendre soin de soi.">
+<meta name="color-scheme" content="light dark">
 <title>SERENA</title>
-<style>
-/* ===================== CONFIGURATION / DESIGN TOKENS ===================== */
-:root{
-  --bg:#F8FAFC; --surface:#FFFFFF; --primary:#7C3AED; --accent:#EC4899; --teal:#14B8A6;
-  --ink:#172033; --muted:#64748B; --danger:#DC2626; --warn:#F59E0B; --ok:#16A34A;
-  --border: rgba(23,32,51,0.10); --shadow: 0 1px 2px rgba(23,32,51,0.06), 0 8px 24px rgba(23,32,51,0.06);
-  --radius:16px; --radius-sm:10px; --font-head:'Fraunces','Iowan Old Style','Georgia',serif;
-  --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif;
-  --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
-  box-sizing:border-box;
-}
-:root:not([data-theme="light"]) { }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#0F172A; --surface:#1E293B; --primary:#A78BFA; --accent:#F472B6; --teal:#2DD4BF;
-    --ink:#F8FAFC; --muted:#94A3B8; --border: rgba(248,250,252,0.10);
-    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#0F172A; --surface:#1E293B; --primary:#A78BFA; --accent:#F472B6; --teal:#2DD4BF;
-  --ink:#F8FAFC; --muted:#94A3B8; --border: rgba(248,250,252,0.10);
-  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-body);
-  padding-top:var(--safe-top); padding-bottom:var(--safe-bottom); -webkit-tap-highlight-color:transparent;
-}
-html{scroll-padding-top:var(--safe-top)}
-h1,h2,h3,.brand{font-family:var(--font-head)}
-button{font-family:inherit}
-img,svg{max-width:100%}
-@media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms!important; transition-duration:.001ms!important;} }
-a{color:var(--primary)}
-.hidden{display:none!important}
-.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
-button, .btn{min-height:44px;min-width:44px}
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible{
-  outline:3px solid var(--primary); outline-offset:2px;
-}
-button{cursor:pointer;border:none;border-radius:var(--radius-sm);background:var(--surface);color:var(--ink)}
-.btn-primary{background:var(--primary);color:#fff;padding:12px 18px;font-weight:600;font-size:15px}
-.btn-secondary{background:transparent;border:1.5px solid var(--border);padding:12px 18px;font-weight:600;color:var(--ink)}
-.btn-danger{background:var(--danger);color:#fff;padding:12px 18px;font-weight:600}
-.btn-ghost{background:transparent;padding:8px 10px;color:var(--muted)}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-input,select,textarea{
-  width:100%;padding:11px 12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);
-  background:var(--bg);color:var(--ink);font-size:15px;font-family:inherit;
-}
-label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px;font-weight:600}
-.row{display:flex;gap:10px;flex-wrap:wrap}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.section-title{font-size:22px;margin:4px 0 14px;font-weight:600}
-.muted{color:var(--muted);font-size:13px}
-.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600}
-.pill-red{background:rgba(220,38,38,.14);color:var(--danger)}
-.pill-green{background:rgba(22,163,74,.14);color:var(--ok)}
-.pill-violet{background:rgba(124,58,237,.14);color:var(--primary)}
-.pill-grey{background:rgba(100,116,139,.14);color:var(--muted)}
-.disclaimer{background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.35);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;color:var(--ink)}
-
-/* ---- App shell ---- */
-#app{max-width:1180px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
-.topbar{
-  position:sticky;top:0;z-index:20;background:var(--bg);display:flex;align-items:center;gap:10px;
-  padding:calc(10px + var(--safe-top)) 16px 10px;border-bottom:1px solid var(--border);
-}
-.topbar .brand{font-weight:700;font-size:19px;display:flex;align-items:center;gap:8px}
-.topbar .grow{flex:1}
-.sec-state{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}
-main{flex:1;padding:16px 16px 96px;width:100%}
-@media (min-width:1024px){ main{padding:24px 32px 48px} }
-
-.tabbar{
-  position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);
-  border-top:1px solid var(--border);display:flex;padding-bottom:var(--safe-bottom);
-}
-.tabbar button{flex:1;background:transparent;border-radius:0;display:flex;flex-direction:column;
-  align-items:center;gap:2px;padding:8px 2px;font-size:11px;color:var(--muted);font-weight:600}
-.tabbar button[aria-current="page"]{color:var(--primary)}
-.tabbar svg{width:22px;height:22px}
-
-.sidebar{display:none}
-@media (min-width:1024px){
-  #app{flex-direction:row}
-  .tabbar{display:none}
-  .sidebar{
-    display:flex;flex-direction:column;width:230px;flex-shrink:0;border-right:1px solid var(--border);
-    padding:18px 12px;gap:2px;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
-  }
-  .sidebar button{display:flex;align-items:center;gap:10px;justify-content:flex-start;padding:11px 12px;
-    font-size:14px;font-weight:600;color:var(--muted);border-radius:var(--radius-sm)}
-  .sidebar button[aria-current="page"]{background:rgba(124,58,237,.10);color:var(--primary)}
-  .content-col{flex:1;min-width:0}
-  .topbar{display:none}
-}
-
-/* Splash / lock / onboarding */
-.center-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;gap:10px}
-.logo-lg{width:96px;height:96px}
-.tagline{color:var(--muted);font-size:14px;max-width:280px}
-.progress-dots{display:flex;gap:6px;margin-top:18px}
-.progress-dots span{width:7px;height:7px;border-radius:50%;background:var(--border)}
-.progress-dots span.active{background:var(--primary)}
-.pinpad{display:flex;gap:12px;margin:18px 0;justify-content:center}
-.pinpad .dot{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--muted)}
-.pinpad .dot.filled{background:var(--primary);border-color:var(--primary)}
-.numpad{display:grid;grid-template-columns:repeat(3,72px);gap:14px;justify-content:center}
-.numpad button{width:72px;height:72px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:22px;font-weight:600}
-
-/* Onboarding */
-.onb-step{max-width:480px;margin:0 auto}
-.onb-illustr{width:100%;height:150px;display:flex;align-items:center;justify-content:center}
-
-/* Calendar */
-.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
-.cal-dow{text-align:center;font-size:11px;color:var(--muted);font-weight:700;padding:4px 0}
-.cal-day{aspect-ratio:1;border-radius:10px;border:1px solid var(--border);background:var(--surface);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;font-size:13px;gap:2px}
-.cal-day.out{opacity:.35}
-.cal-day.today{border-color:var(--primary);border-width:2px}
-.cal-day .dots{display:flex;gap:2px;position:absolute;bottom:4px}
-.cal-day .dots span{width:5px;height:5px;border-radius:50%}
-.dot-period{background:var(--danger)} .dot-fertile{background:var(--ok)} .dot-ovu{background:var(--primary)} .dot-log{background:var(--teal)}
-
-/* Modal / sheet */
-.overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center}
-@media (min-width:640px){ .overlay{align-items:center} }
-.sheet{background:var(--surface);width:100%;max-width:560px;max-height:88vh;overflow-y:auto;
-  border-radius:20px 20px 0 0;padding:18px 18px calc(18px + var(--safe-bottom));box-shadow:var(--shadow)}
-@media (min-width:640px){ .sheet{border-radius:20px} }
-.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.sheet-head h2{margin:0;font-size:18px}
-
-/* Toast */
-#toastwrap{position:fixed;bottom:calc(80px + var(--safe-bottom));left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:80;pointer-events:none}
-@media (min-width:1024px){ #toastwrap{bottom:24px} }
-.toast{background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:13px;box-shadow:var(--shadow);max-width:90vw}
-
-/* Dashboard cards */
-.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-@media (min-width:720px){ .stat-grid{grid-template-columns:repeat(4,1fr)} }
-.stat-card .num{font-size:26px;font-weight:700;font-family:var(--font-head)}
-.quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
-@media (min-width:720px){ .quick-actions{grid-template-columns:repeat(6,1fr)} }
-.quick-actions button{display:flex;flex-direction:column;gap:4px;align-items:center;padding:12px 4px;font-size:12px;font-weight:600;border:1px solid var(--border)}
-
-/* Empty state */
-.empty{text-align:center;padding:36px 16px;color:var(--muted)}
-
-/* Chart wrapper */
-.chart-wrap{width:100%;overflow-x:auto}
-canvas.chart{width:100%;height:160px;display:block}
-
-/* Timeline (pregnancy) */
-.timeline{position:relative;padding-left:22px}
-.timeline::before{content:'';position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--border)}
-.tl-item{position:relative;margin-bottom:14px}
-.tl-item::before{content:'';position:absolute;left:-22px;top:3px;width:11px;height:11px;border-radius:50%;background:var(--primary)}
-
-/* Timer big */
-.timer-num{font-size:48px;font-family:var(--font-head);font-weight:700;text-align:center;margin:14px 0}
-.timer-btn{width:130px;height:130px;border-radius:50%;font-size:16px;font-weight:700;color:#fff;margin:0 auto;display:block}
-
-/* Print */
-#print-report{display:none}
-@media print{
-  body *{visibility:hidden}
-  #print-report,#print-report *{visibility:visible}
-  #print-report{display:block;position:absolute;left:0;top:0;width:100%;color:#111;background:#fff}
-  .no-print{display:none!important}
-}
-.settings-list button{width:100%;display:flex;justify-content:space-between;align-items:center;padding:13px 14px;border:1px solid var(--border);margin-bottom:8px;text-align:left;font-weight:600}
-table.hist{width:100%;border-collapse:collapse;font-size:13px}
-table.hist th,table.hist td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)}
-.toggle{position:relative;width:44px;height:26px;border-radius:99px;background:var(--border);flex-shrink:0}
-.toggle.on{background:var(--primary)}
-.toggle span{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .15s}
-.toggle.on span{transform:translateX(18px)}
-</style>
+<link rel="icon" href="./assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="96x96" href="./assets/favicon-96x96.png">
+<link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+<link rel="manifest" href="./manifest.json">
+<link rel="stylesheet" href="./assets/css/styles.css">
 </head>
+
 <body>
-<div id="print-report"></div>
-<div id="toastwrap" aria-live="polite"></div>
+<!-- Sprite SVG : Définition de toutes les icônes -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Logo SERENA -->
+    <symbol id="logo-serena" viewBox="0 0 200 200">
+      <defs>
+        <linearGradient id="lg-violet" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#4A2B7A"/>
+          <stop offset="50%" stop-color="#6B4BA8"/>
+          <stop offset="100%" stop-color="#B8A3DC"/>
+        </linearGradient>
+        <linearGradient id="lg-rose" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#F5A9C4"/>
+          <stop offset="100%" stop-color="#F5B8A8"/>
+        </linearGradient>
+        <linearGradient id="lg-vert" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#D4E5CE"/>
+          <stop offset="100%" stop-color="#8FB886"/>
+        </linearGradient>
+      </defs>
+      <path d="M100 25 A75 75 0 1 0 100 175 A75 75 0 0 0 165 120"
+            fill="none" stroke="url(#lg-violet)" stroke-width="16" stroke-linecap="round"/>
+      <path d="M100 55 A45 45 0 1 0 100 145"
+            fill="none" stroke="url(#lg-violet)" stroke-width="14" stroke-linecap="round"/>
+      <path d="M100 175 A75 75 0 0 0 165 120"
+            fill="none" stroke="url(#lg-rose)" stroke-width="16" stroke-linecap="round"/>
+      <path d="M55 105 Q45 75 70 65 Q85 95 65 115 Q58 112 55 105 Z"
+            fill="url(#lg-vert)"/>
+    </symbol>
 
-<!-- ===================== SPLASH ===================== -->
+    <!-- Logo compact -->
+    <symbol id="logo-serena-compact" viewBox="0 0 200 200">
+      <use href="#logo-serena"/>
+    </symbol>
+
+    <!-- Logo monochrome -->
+    <symbol id="logo-serena-mono" viewBox="0 0 200 200">
+      <path d="M100 25 A75 75 0 1 0 100 175 A75 75 0 0 0 165 120"
+            fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round"/>
+      <path d="M100 55 A45 45 0 1 0 100 145"
+            fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round"/>
+      <path d="M100 175 A75 75 0 0 0 165 120"
+            fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" opacity=".55"/>
+      <path d="M55 105 Q45 75 70 65 Q85 95 65 115 Q58 112 55 105 Z"
+            fill="currentColor"/>
+    </symbol>
+
+    <!-- Icônes de navigation -->
+    <symbol id="ico-home" viewBox="0 0 24 24">
+      <path d="M4 11l8-7 8 7v9a1 1 0 01-1 1h-4v-6H9v6H5a1 1 0 01-1-1z"
+            fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="ico-calendar" viewBox="0 0 24 24">
+      <rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M3 9h18M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-chart" viewBox="0 0 24 24">
+      <path d="M4 20V10M12 20V4M20 20v-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-heart" viewBox="0 0 24 24">
+      <path d="M12 21s-7-4.5-9.5-9C.8 8.4 3 4 7 4c2 0 3.7 1.2 5 3 1.3-1.8 3-3 5-3 4 0 6.2 4.4 4.5 8-2.5 4.5-9.5 9-9.5 9z"
+            fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="ico-user" viewBox="0 0 24 24">
+      <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M4 21c0-4 4-6 8-6s8 2 8 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-lock" viewBox="0 0 24 24">
+      <rect x="4" y="10" width="16" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M8 10V7a4 4 0 018 0v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-close" viewBox="0 0 24 24">
+      <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-theme" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="ico-settings" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+            fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- Zone d'impression pour le rapport PDF -->
+<div id="print-report" aria-hidden="true"></div>
+
+<!-- Notifications Toast -->
+<div id="toastwrap" role="status" aria-live="polite" aria-atomic="false"></div>
+
+<!-- Écran de démarrage (Splash) -->
 <div id="screen-splash" class="center-screen">
-  <svg class="logo-lg" viewBox="0 0 100 100" role="img" aria-label="Logo SERENA">
-    <defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#7C3AED"/><stop offset="55%" stop-color="#EC4899"/><stop offset="100%" stop-color="#14B8A6"/>
-    </linearGradient></defs>
-    <circle cx="50" cy="50" r="34" fill="none" stroke="url(#lg1)" stroke-width="7"/>
-    <circle cx="62" cy="42" r="24" fill="var(--bg)"/>
-  </svg>
-  <h1 class="brand" style="font-size:28px;margin:6px 0 0">SERENA</h1>
+  <svg class="logo-lg" aria-hidden="true"><use href="#logo-serena"/></svg>
+  <h1 class="brand" style="font-size:28px;margin:6px 0 0;color:var(--primary);letter-spacing:.15em">SERENA</h1>
   <p class="tagline" data-i18n="tagline">Comprendre son corps. Anticiper. Prendre soin de soi.</p>
-  <div class="progress-dots"><span class="active"></span><span></span><span></span></div>
+  <div class="progress-dots" aria-hidden="true">
+    <span class="active"></span><span></span><span></span>
+  </div>
 </div>
 
-<!-- ===================== LOCK SCREEN ===================== -->
+<!-- Écran de verrouillage (PIN) -->
 <div id="screen-lock" class="center-screen hidden">
-  <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
-  <h2 data-i18n="lockTitle">Application verrouillée</h2>
+  <svg width="56" height="56" aria-hidden="true" style="color:var(--primary)">
+    <use href="#ico-lock"/>
+  </svg>
+  <h2 data-i18n="lockTitle" style="color:var(--primary)">Application verrouillée</h2>
   <p class="muted" id="lockMsg" data-i18n="lockEnterPin">Entrez votre code PIN</p>
-  <div class="pinpad" id="pinDots"></div>
-  <div class="numpad" id="numpad"></div>
-  <button class="btn-ghost" id="btnBiometric" style="margin-top:10px" data-i18n="useBiometric">Utiliser la biométrie</button>
+  <div class="pinpad" id="pinDots" aria-hidden="true"></div>
+  <div class="numpad" id="numpad" role="group" aria-label="Clavier numérique"></div>
+  <button class="btn-ghost hidden" id="btnBiometric" style="margin-top:10px" data-i18n="useBiometric">
+    Utiliser la biométrie
+  </button>
 </div>
 
-<!-- ===================== ONBOARDING ===================== -->
+<!-- Écran d'onboarding -->
 <div id="screen-onboarding" class="center-screen hidden" style="justify-content:flex-start;padding-top:40px">
   <div class="onb-step" id="onbContent" style="width:100%"></div>
 </div>
 
-<!-- ===================== MAIN APP ===================== -->
+<!-- Application principale -->
 <div id="app" class="hidden">
+  <!-- Navigation latérale (Desktop) -->
   <nav class="sidebar" id="sidebar" aria-label="Navigation principale"></nav>
+
   <div class="content-col">
+    <!-- Barre supérieure (Mobile) -->
     <header class="topbar">
       <div class="brand">
-        <svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="34" fill="none" stroke="var(--primary)" stroke-width="9"/><circle cx="62" cy="42" r="24" fill="var(--bg)"/></svg>
+        <svg width="28" height="28" aria-hidden="true"><use href="#logo-serena-compact"/></svg>
         SERENA
       </div>
       <div class="grow"></div>
-      <div class="sec-state" id="secState" title="État de sécurité">🔒</div>
-      <button class="btn-ghost" id="btnThemeTop" aria-label="Changer de thème">🌗</button>
+      <button class="btn-ghost" id="btnThemeTop" aria-label="Changer de thème" title="Changer de thème">
+        <svg width="22" height="22"><use href="#ico-theme"/></svg>
+      </button>
+      <button class="btn-ghost" id="btnSettingsTop" aria-label="Paramètres">
+        <svg width="22" height="22"><use href="#ico-settings"/></svg>
+      </button>
     </header>
-    <main id="mainView" role="main"></main>
+
+    <!-- Contenu principal -->
+    <main id="mainView" role="main" aria-live="polite"></main>
   </div>
+
+  <!-- Barre d'onglets (Mobile) -->
   <nav class="tabbar" id="tabbar" aria-label="Navigation"></nav>
 </div>
 
+<!-- Racine des modales -->
 <div id="modalRoot"></div>
-<script>
-'use strict';
-window.SERENA = window.SERENA || {};
-const S = window.SERENA;
 
-/* ===================== I18N ===================== */
-S.dict = {
-fr:{
-  tagline:"Comprendre son corps. Anticiper. Prendre soin de soi.",
-  lockTitle:"Application verrouillée", lockEnterPin:"Entrez votre code PIN",
-  useBiometric:"Utiliser la biométrie", wrongPin:"Code incorrect", tryAgainIn:"Réessayez dans {n}s",
-  onbWelcomeTitle:"Bienvenue sur SERENA", onbWelcomeBody:"SERENA vous aide à comprendre votre cycle, suivre votre corps et anticiper — sans jugement, sans diagnostic.",
-  onbPrivacyTitle:"Vos données restent chez vous", onbPrivacyBody:"Toutes vos données de santé sont stockées uniquement sur votre appareil. Aucun envoi automatique vers un serveur.",
-  onbCycleTitle:"Suivi du cycle", onbCycleBody:"Enregistrez vos règles pour obtenir des estimations personnalisées : jour du cycle, fenêtre fertile, ovulation potentielle.",
-  onbSecurityTitle:"Protégez votre application", onbSecurityBody:"Créez un code PIN pour verrouiller SERENA. Vous pourrez aussi activer la biométrie si votre appareil le permet.",
-  skip:"Passer", next:"Suivant", start:"Commencer", createPin:"Créer un code PIN", confirmPin:"Confirmez le code",
-  navDashboard:"Accueil", navCalendar:"Calendrier", navTracking:"Suivi", navPregnancy:"Grossesse", navProfile:"Profil",
-  navFertility:"Fertilité", navTemperature:"Température", navJournal:"Journal", navSexual:"Activité", navImplant:"Implant",
-  navReminders:"Rappels", navAppointments:"Rendez-vous", navReports:"Rapports", navSettings:"Paramètres",
-  navSecurity:"Sécurité", navPrivacy:"Confidentialité", navAbout:"À propos", navHelp:"Aide", navContractions:"Contractions",
-  cycleDay:"Jour du cycle", nextPeriod:"Prochaines règles estimées", avgCycle:"Durée moy. du cycle", fertileWindow:"Fenêtre fertile",
-  ovulation:"Ovulation potentielle", implantStatus:"État de l'implant", recentTemp:"Température récente", journalSummary:"Résumé du journal",
-  todayReminders:"Rappels du jour", nextAppt:"Prochain rendez-vous", pregnancyStatus:"Grossesse en cours",
-  qaPeriod:"Règles", qaJournal:"Journal", qaTemp:"Température", qaReport:"Rapport", qaSymptoms:"Symptômes", qaNote:"Note",
-  noData:"Aucune donnée enregistrée", estimation:"Estimation", confidenceLow:"Confiance FAIBLE", confidenceMed:"Confiance MOYENNE", confidenceHigh:"Confiance ÉLEVÉE",
-  fertilityWarning:"Les périodes fertiles affichées sont des estimations et ne constituent pas une méthode contraceptive.",
-  ovulationNote:"Ovulation potentiellement détectée — jamais confirmée médicalement.",
-  sexualWarning:"Le suivi des rapports ne permet pas à lui seul de déterminer le risque de grossesse.",
-  implantWarning:"La date affichée est calculée à partir des informations enregistrées. Vérifiez la durée applicable à votre implant avec votre professionnel de santé.",
-  medicalFooter:"SERENA est un outil de suivi personnel. Il ne remplace pas un avis médical.",
-  save:"Enregistrer", cancel:"Annuler", delete:"Supprimer", edit:"Modifier", close:"Fermer", add:"Ajouter", confirm:"Confirmer",
-  today:"Aujourd'hui", periods:"Règles", spotting:"Spotting", flow:"Flux", mood:"Humeur", pain:"Douleur", energy:"Énergie", sleep:"Sommeil", libido:"Libido",
-  symptoms:"Symptômes", notes:"Notes", date:"Date", startDate:"Date de début", endDate:"Date de fin",
-  deleteAllTitle:"Supprimer toutes mes données", deleteAllWarn:"Cette action est irréversible.",
-  exportData:"Exporter mes données", importData:"Importer mes données", exportPdf:"Exporter mon dossier (PDF)",
-  loadDemo:"Charger les données de démonstration", clearDemo:"Effacer les données de démonstration",
-  seeWhenConsult:"Quand consulter un professionnel de santé ?", consultList:"Douleur intense ou inhabituelle • Saignement anormalement abondant • Fièvre • Malaise important • Symptômes inquiétants pendant la grossesse • Problème supposé lié à l'implant",
-  installApp:"Installer SERENA", statusPage:"État technique", runTests:"Lancer les auto-tests",
-  contractionStart:"DÉBUT", contractionEnd:"FIN", duration:"Durée", interval:"Intervalle",
-  weeksPregnant:"Semaines de grossesse", trimester:"Trimestre", edd:"DPA estimée",
-  appearance:"Apparence", language:"Langue", security:"Sécurité", data:"Données", about:"À propos", help:"Aide",
-  light:"Clair", dark:"Sombre", system:"Système", enableAutoLock:"Verrouillage auto", never:"Jamais",
-  professional:"Professionnel", facility:"Établissement", type:"Type", time:"Heure",
-  weight:"Poids (optionnel)", events:"Événements",
-  lmp:"Date des dernières règles", conception:"Date de conception (optionnelle)", providedEdd:"DPA fournie par un professionnel",
-  none:"Aucun(e)"
-},
-en:{
-  tagline:"Understand your body. Anticipate. Take care of yourself.",
-  lockTitle:"App locked", lockEnterPin:"Enter your PIN code",
-  useBiometric:"Use biometrics", wrongPin:"Wrong code", tryAgainIn:"Try again in {n}s",
-  onbWelcomeTitle:"Welcome to SERENA", onbWelcomeBody:"SERENA helps you understand your cycle, track your body and plan ahead — no judgment, no diagnosis.",
-  onbPrivacyTitle:"Your data stays with you", onbPrivacyBody:"All your health data is stored only on your device. Nothing is sent to a server automatically.",
-  onbCycleTitle:"Cycle tracking", onbCycleBody:"Log your periods to get personalized estimates: cycle day, fertile window, potential ovulation.",
-  onbSecurityTitle:"Protect your app", onbSecurityBody:"Create a PIN code to lock SERENA. You can also enable biometrics if your device supports it.",
-  skip:"Skip", next:"Next", start:"Get started", createPin:"Create a PIN", confirmPin:"Confirm the code",
-  navDashboard:"Home", navCalendar:"Calendar", navTracking:"Tracking", navPregnancy:"Pregnancy", navProfile:"Profile",
-  navFertility:"Fertility", navTemperature:"Temperature", navJournal:"Journal", navSexual:"Activity", navImplant:"Implant",
-  navReminders:"Reminders", navAppointments:"Appointments", navReports:"Reports", navSettings:"Settings",
-  navSecurity:"Security", navPrivacy:"Privacy", navAbout:"About", navHelp:"Help", navContractions:"Contractions",
-  cycleDay:"Cycle day", nextPeriod:"Estimated next period", avgCycle:"Avg. cycle length", fertileWindow:"Fertile window",
-  ovulation:"Potential ovulation", implantStatus:"Implant status", recentTemp:"Recent temperature", journalSummary:"Journal summary",
-  todayReminders:"Today's reminders", nextAppt:"Next appointment", pregnancyStatus:"Pregnancy in progress",
-  qaPeriod:"Period", qaJournal:"Journal", qaTemp:"Temperature", qaReport:"Report", qaSymptoms:"Symptoms", qaNote:"Note",
-  noData:"No data recorded", estimation:"Estimate", confidenceLow:"LOW confidence", confidenceMed:"MEDIUM confidence", confidenceHigh:"HIGH confidence",
-  fertilityWarning:"Fertile windows shown are estimates and are not a contraceptive method.",
-  ovulationNote:"Ovulation potentially detected — never medically confirmed.",
-  sexualWarning:"Tracking intercourse alone cannot determine pregnancy risk.",
-  implantWarning:"The date shown is calculated from the information you entered. Check the duration for your implant with your healthcare professional.",
-  medicalFooter:"SERENA is a personal tracking tool. It does not replace medical advice.",
-  save:"Save", cancel:"Cancel", delete:"Delete", edit:"Edit", close:"Close", add:"Add", confirm:"Confirm",
-  today:"Today", periods:"Periods", spotting:"Spotting", flow:"Flow", mood:"Mood", pain:"Pain", energy:"Energy", sleep:"Sleep", libido:"Libido",
-  symptoms:"Symptoms", notes:"Notes", date:"Date", startDate:"Start date", endDate:"End date",
-  deleteAllTitle:"Delete all my data", deleteAllWarn:"This action is irreversible.",
-  exportData:"Export my data", importData:"Import my data", exportPdf:"Export my record (PDF)",
-  loadDemo:"Load demo data", clearDemo:"Clear demo data",
-  seeWhenConsult:"When to see a healthcare professional?", consultList:"Severe or unusual pain • Abnormally heavy bleeding • Fever • Significant discomfort • Worrying pregnancy symptoms • Suspected implant issue",
-  installApp:"Install SERENA", statusPage:"Technical status", runTests:"Run self-tests",
-  contractionStart:"START", contractionEnd:"STOP", duration:"Duration", interval:"Interval",
-  weeksPregnant:"Weeks pregnant", trimester:"Trimester", edd:"Estimated due date",
-  appearance:"Appearance", language:"Language", security:"Security", data:"Data", about:"About", help:"Help",
-  light:"Light", dark:"Dark", system:"System", enableAutoLock:"Auto-lock", never:"Never",
-  professional:"Professional", facility:"Facility", type:"Type", time:"Time",
-  weight:"Weight (optional)", events:"Events",
-  lmp:"Last menstrual period date", conception:"Conception date (optional)", providedEdd:"Due date provided by a professional",
-  none:"None"
-}};
-S.lang = localStorage.getItem('serena_lang') || (navigator.language||'fr').slice(0,2);
-if(!S.dict[S.lang]) S.lang='fr';
-S.t = function(key){ return (S.dict[S.lang] && S.dict[S.lang][key]) || (S.dict.fr[key]) || key; };
+<!-- Badge hors-ligne -->
+<div id="offlineBadge" class="hidden" style="
+  position:fixed; top:calc(8px + var(--safe-top)); left:50%; transform:translateX(-50%);
+  background:var(--warn); color:#5A3A00; padding:4px 12px; border-radius:99px;
+  font-size:12px; font-weight:600; z-index:100; box-shadow:var(--shadow-sm)">
+  ⚠️ Hors-ligne — données locales uniquement
+</div>
 
-/* ===================== THEME ===================== */
-S.applyTheme = function(){
-  const pref = localStorage.getItem('serena_theme') || 'system';
-  if(pref==='system'){ document.documentElement.removeAttribute('data-theme'); }
-  else { document.documentElement.setAttribute('data-theme', pref); }
-};
-S.applyTheme();
-
-/* ===================== TOAST ===================== */
-S.toast = function(msg){
-  const wrap = document.getElementById('toastwrap');
-  const el = document.createElement('div'); el.className='toast'; el.textContent = msg;
-  wrap.appendChild(el);
-  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),300); }, 2600);
-};
-
-/* ===================== DATE HELPERS (calendar dates, no TZ drift) ===================== */
-S.dt = {
-  toISO(y,m,d){ return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; },
-  parse(iso){ const [y,m,d] = iso.split('-').map(Number); return {y,m,d}; },
-  toSerial(iso){ const {y,m,d}=this.parse(iso); return Date.UTC(y,m-1,d)/86400000; },
-  fromSerial(serial){ const dt = new Date(serial*86400000); return this.toISO(dt.getUTCFullYear(), dt.getUTCMonth()+1, dt.getUTCDate()); },
-  addDays(iso,n){ return this.fromSerial(this.toSerial(iso)+n); },
-  diffDays(isoA,isoB){ return this.toSerial(isoB)-this.toSerial(isoA); },
-  todayISO(){ const n=new Date(); return this.toISO(n.getFullYear(), n.getMonth()+1, n.getDate()); },
-  fmt(iso, withYear){ if(!iso) return '—'; const {y,m,d}=this.parse(iso);
-    const months = S.lang==='fr' ? ['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'] : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return `${d} ${months[m-1]}${withYear===false?'':' '+y}`; },
-  monthLabel(y,m){ const months = S.lang==='fr' ? ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'] : ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    return `${months[m-1]} ${y}`; }
-};
-
-/* ===================== DATABASE (IndexedDB) ===================== */
-S.DB_NAME='SERENA_DB'; S.DB_VERSION=1;
-S.STORES=['profile','cycles','periods','dailyLogs','temperatures','sexualActivity','implant','pregnancy','appointments','reminders','contractions','settings','security'];
-S.db = null;
-S.openDB = function(){
-  return new Promise((resolve,reject)=>{
-    if(!('indexedDB' in window)){ reject(new Error('no-indexeddb')); return; }
-    const req = indexedDB.open(S.DB_NAME, S.DB_VERSION);
-    req.onupgradeneeded = (e)=>{
-      const db = e.target.result;
-      S.STORES.forEach(name=>{
-        if(!db.objectStoreNames.contains(name)){
-          db.createObjectStore(name, {keyPath:'id', autoIncrement:true});
-        }
-      });
-    };
-    req.onsuccess = (e)=>{ S.db = e.target.result; resolve(S.db); };
-    req.onerror = ()=> reject(req.error);
-  });
-};
-S.tx = function(store, mode='readonly'){ return S.db.transaction(store, mode).objectStore(store); };
-S.dbAdd = function(store, obj){ return new Promise((res,rej)=>{
-  const now = new Date().toISOString(); obj.createdAt = obj.createdAt||now; obj.updatedAt = now;
-  const r = S.tx(store,'readwrite').add(obj); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
-});};
-S.dbPut = function(store, obj){ return new Promise((res,rej)=>{
-  obj.updatedAt = new Date().toISOString();
-  const r = S.tx(store,'readwrite').put(obj); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
-});};
-S.dbDelete = function(store, id){ return new Promise((res,rej)=>{
-  const r = S.tx(store,'readwrite').delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);
-});};
-S.dbGetAll = function(store){ return new Promise((res,rej)=>{
-  const r = S.tx(store).getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>rej(r.error);
-});};
-S.dbClear = function(store){ return new Promise((res,rej)=>{
-  const r = S.tx(store,'readwrite').clear(); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error);
-});};
-S.dbClearAll = async function(){ for(const s of S.STORES){ await S.dbClear(s); } };
-
-/* ===================== CRYPTO / SECURITY (PIN) ===================== */
-S.crypto = {
-  async hashPin(pin, saltB64){
-    const enc = new TextEncoder();
-    let salt;
-    if(saltB64){ salt = Uint8Array.from(atob(saltB64), c=>c.charCodeAt(0)); }
-    else { salt = crypto.getRandomValues(new Uint8Array(16)); }
-    const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(pin), {name:'PBKDF2'}, false, ['deriveBits']);
-    const bits = await crypto.subtle.deriveBits({name:'PBKDF2', salt, iterations:150000, hash:'SHA-256'}, keyMaterial, 256);
-    const hashB64 = btoa(String.fromCharCode(...new Uint8Array(bits)));
-    const saltOut = btoa(String.fromCharCode(...salt));
-    return {hash:hashB64, salt:saltOut};
-  },
-  async verifyPin(pin, storedHash, storedSalt){
-    const {hash} = await this.hashPin(pin, storedSalt);
-    return hash === storedHash;
-  }
-};
-
-/* ===================== CYCLE / FERTILITY ALGORITHMS ===================== */
-S.calc = {
-  calculateCycleDay(periods, refIso){
-    if(!periods || !periods.length) return {value:null, confidence:'low'};
-    const sorted = [...periods].sort((a,b)=> S.dt.toSerial(b.startDate)-S.dt.toSerial(a.startDate));
-    const last = sorted.find(p=> S.dt.toSerial(p.startDate) <= S.dt.toSerial(refIso));
-    if(!last) return {value:null, confidence:'low'};
-    const day = S.dt.diffDays(last.startDate, refIso) + 1;
-    return {value: day, lastStart: last.startDate};
-  },
-  calculateAverageCycleLength(periods){
-    if(!periods || periods.length<2) return {value:null, confidence:'low', n:periods?periods.length:0};
-    const sorted = [...periods].sort((a,b)=> S.dt.toSerial(a.startDate)-S.dt.toSerial(b.startDate));
-    const lengths = [];
-    for(let i=1;i<sorted.length;i++){ lengths.push(S.dt.diffDays(sorted[i-1].startDate, sorted[i].startDate)); }
-    const valid = lengths.filter(l=> l>=15 && l<=60);
-    if(!valid.length) return {value:null, confidence:'low', n:0};
-    const avg = Math.round(valid.reduce((a,b)=>a+b,0)/valid.length);
-    const conf = valid.length>=6?'high': valid.length>=3?'medium':'low';
-    return {value:avg, confidence:conf, n:valid.length};
-  },
-  calculateAveragePeriodLength(periods){
-    const withEnd = (periods||[]).filter(p=>p.endDate);
-    if(!withEnd.length) return {value:null};
-    const avg = Math.round(withEnd.reduce((a,p)=> a + S.dt.diffDays(p.startDate,p.endDate) + 1, 0)/withEnd.length);
-    return {value:avg};
-  },
-  predictNextPeriod(periods, defaultLen){
-    if(!periods || !periods.length) return {date:null, confidence:'low'};
-    const sorted = [...periods].sort((a,b)=> S.dt.toSerial(b.startDate)-S.dt.toSerial(a.startDate));
-    const lastStart = sorted[0].startDate;
-    const avg = this.calculateAverageCycleLength(periods);
-    const len = avg.value || defaultLen || 28;
-    return {date: S.dt.addDays(lastStart, len), confidence: avg.confidence||'low', usedLength: len};
-  },
-  estimateFertileWindow(periods, defaultLen){
-    const next = this.predictNextPeriod(periods, defaultLen);
-    if(!next.date) return {start:null,end:null,confidence:'low'};
-    return {start: S.dt.addDays(next.date, -18), end: S.dt.addDays(next.date, -11), confidence: next.confidence};
-  },
-  estimateOvulation(periods, defaultLen){
-    const next = this.predictNextPeriod(periods, defaultLen);
-    if(!next.date) return {date:null, confidence:'low'};
-    return {date: S.dt.addDays(next.date, -14), confidence: next.confidence};
-  },
-  analyzeBasalTemperature(temps){
-    if(!temps || temps.length<4) return {rise:false, message:null};
-    const sorted = [...temps].sort((a,b)=> S.dt.toSerial(a.date)-S.dt.toSerial(b.date));
-    const last6 = sorted.slice(-6);
-    if(last6.length<4) return {rise:false, message:null};
-    const baseline = last6.slice(0,Math.max(3,last6.length-3)).reduce((a,t)=>a+t.value,0)/Math.max(3,last6.length-3);
-    const recent = last6.slice(-3);
-    const recentAvg = recent.reduce((a,t)=>a+t.value,0)/recent.length;
-    const rise = (recentAvg - baseline) >= 0.2;
-    return {rise, baseline:+baseline.toFixed(2), recentAvg:+recentAvg.toFixed(2)};
-  },
-  calculatePregnancyWeeks(lmpIso, refIso){
-    if(!lmpIso) return {weeks:null, days:null};
-    const total = S.dt.diffDays(lmpIso, refIso||S.dt.todayISO());
-    if(total<0) return {weeks:null, days:null};
-    return {weeks: Math.floor(total/7), days: total%7, totalDays: total};
-  },
-  calculateEDD(lmpIso, conceptionIso, providedEdd){
-    if(providedEdd) return providedEdd;
-    if(conceptionIso) return S.dt.addDays(conceptionIso, 266);
-    if(lmpIso) return S.dt.addDays(lmpIso, 280);
-    return null;
-  },
-  calculateTrimester(weeks){
-    if(weeks==null) return null;
-    if(weeks<13) return 1; if(weeks<27) return 2; return 3;
-  },
-  calculateContractionInterval(list){
-    if(!list || list.length<2) return null;
-    const sorted = [...list].sort((a,b)=> new Date(a.start)-new Date(b.start));
-    const last2 = sorted.slice(-2);
-    const intervalSec = (new Date(last2[1].start) - new Date(last2[0].start))/1000;
-    return Math.round(intervalSec);
-  },
-  calculateImplantEndDate(insertionIso, durationMonths){
-    if(!insertionIso || !durationMonths) return null;
-    const {y,m,d} = S.dt.parse(insertionIso);
-    const totalM = m - 1 + Number(durationMonths);
-    const ny = y + Math.floor(totalM/12); const nm = (totalM%12)+1;
-    const dim = new Date(Date.UTC(ny, nm, 0)).getUTCDate();
-    return S.dt.toISO(ny, nm, Math.min(d, dim));
-  }
-};
-
-/* ===================== STATE ===================== */
-S.state = { profile:null, cycles:[], periods:[], dailyLogs:[], temperatures:[], sexualActivity:[], implant:null,
-  pregnancy:null, appointments:[], reminders:[], contractions:[], settings:{}, route:'dashboard', routeParam:null,
-  isPregnant:false };
-
-S.reloadAll = async function(){
-  const [profileArr, periods, dailyLogs, temperatures, sexualActivity, implantArr, pregnancyArr, appointments, reminders, contractions, settingsArr] = await Promise.all([
-    S.dbGetAll('profile'), S.dbGetAll('periods'), S.dbGetAll('dailyLogs'), S.dbGetAll('temperatures'),
-    S.dbGetAll('sexualActivity'), S.dbGetAll('implant'), S.dbGetAll('pregnancy'), S.dbGetAll('appointments'),
-    S.dbGetAll('reminders'), S.dbGetAll('contractions'), S.dbGetAll('settings')
-  ]);
-  S.state.profile = profileArr[0]||null;
-  S.state.periods = periods; S.state.dailyLogs = dailyLogs; S.state.temperatures = temperatures;
-  S.state.sexualActivity = sexualActivity; S.state.implant = implantArr[0]||null;
-  S.state.pregnancy = pregnancyArr.find(p=>p.active) || null;
-  S.state.appointments = appointments; S.state.reminders = reminders; S.state.contractions = contractions;
-  S.state.settings = settingsArr[0] || {id:1, avgCycleLength:28, tempUnit:'C'};
-  S.state.isPregnant = !!S.state.pregnancy;
-};
-
-/* ===================== NAVIGATION / ROUTER ===================== */
-S.NAV_MOBILE = [
-  {route:'dashboard', label:'navDashboard', icon:'home'},
-  {route:'calendar', label:'navCalendar', icon:'calendar'},
-  {route:'tracking', label:'navTracking', icon:'chart'},
-  {route:'pregnancy', label:'navPregnancy', icon:'heart'},
-  {route:'profile', label:'navProfile', icon:'user'}
-];
-S.NAV_SIDEBAR = [
-  {route:'dashboard', label:'navDashboard'}, {route:'calendar', label:'navCalendar'},
-  {route:'fertility', label:'navFertility'}, {route:'temperature', label:'navTemperature'},
-  {route:'journal', label:'navJournal'}, {route:'sexual', label:'navSexual'},
-  {route:'implant', label:'navImplant'}, {route:'pregnancy', label:'navPregnancy'},
-  {route:'contractions', label:'navContractions'}, {route:'appointments', label:'navAppointments'},
-  {route:'reminders', label:'navReminders'}, {route:'reports', label:'navReports'},
-  {route:'settings', label:'navSettings'}
-];
-S.ICONS = {
-  home:'<path d="M4 11l8-7 8 7v9a1 1 0 01-1 1h-4v-6H9v6H5a1 1 0 01-1-1z"/>',
-  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/>',
-  chart:'<path d="M4 20V10M12 20V4M20 20v-7"/>',
-  heart:'<path d="M12 21s-7-4.5-9.5-9C.8 8.4 3 4 7 4c2 0 3.7 1.2 5 3 1.3-1.8 3-3 5-3 4 0 6.2 4.4 4.5 8-2.5 4.5-9.5 9-9.5 9z"/>',
-  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>'
-};
-function svgIcon(name){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${S.ICONS[name]||''}</svg>`; }
-
-S.navigate = function(route, param){
-  S.state.route = route; S.state.routeParam = param||null;
-  window.location.hash = route;
-  S.renderNavActive(); S.renderView();
-  document.getElementById('mainView').scrollTop = 0; window.scrollTo(0,0);
-};
-
-S.renderNavActive = function(){
-  document.querySelectorAll('#tabbar button, #sidebar button').forEach(b=>{
-    if(b.dataset.route === S.state.route) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
-  });
-};
-
-S.buildNav = function(){
-  const tab = document.getElementById('tabbar'); tab.innerHTML='';
-  S.NAV_MOBILE.forEach(item=>{
-    const b = document.createElement('button'); b.dataset.route=item.route;
-    b.innerHTML = svgIcon(item.icon)+`<span>${S.t(item.label)}</span>`;
-    b.addEventListener('click', ()=> S.navigate(item.route));
-    tab.appendChild(b);
-  });
-  const side = document.getElementById('sidebar'); side.innerHTML='';
-  const brand = document.createElement('div'); brand.style.cssText='font-weight:700;font-size:18px;padding:8px 12px 16px'; brand.textContent='SERENA'; side.appendChild(brand);
-  S.NAV_SIDEBAR.forEach(item=>{
-    const b = document.createElement('button'); b.dataset.route=item.route; b.textContent = S.t(item.label);
-    b.addEventListener('click', ()=> S.navigate(item.route));
-    side.appendChild(b);
-  });
-};
-
-/* ===================== UI: MODAL / SHEET ===================== */
-S.openSheet = function(title, bodyHtml, opts){
-  opts = opts||{};
-  const root = document.getElementById('modalRoot');
-  const ov = document.createElement('div'); ov.className='overlay'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
-  ov.innerHTML = `<div class="sheet"><div class="sheet-head"><h2>${title}</h2><button class="btn-ghost" aria-label="${S.t('close')}" data-close>✕</button></div><div class="sheet-body">${bodyHtml}</div></div>`;
-  root.appendChild(ov);
-  ov.addEventListener('click', (e)=>{ if(e.target===ov || e.target.closest('[data-close]')) ov.remove(); });
-  if(opts.onMount) opts.onMount(ov);
-  return ov;
-};
-S.confirmDialog = function(title, msg, onYes){
-  const ov = S.openSheet(title, `<p>${msg}</p><div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn-secondary" data-close>${S.t('cancel')}</button><button class="btn-danger" id="cdYes">${S.t('confirm')}</button></div>`);
-  ov.querySelector('#cdYes').addEventListener('click', ()=>{ ov.remove(); onYes(); });
-};
-
-/* ===================== SECURITY: PIN LOCK ===================== */
-S.pinBuffer = ''; S.pinMode='verify'; S.pinFirstEntry=null; S.failCount=0; S.lockUntil=0;
-S.security = null;
-
-S.buildNumpad = function(){
-  const grid = document.getElementById('numpad'); grid.innerHTML='';
-  const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
-  keys.forEach(k=>{
-    const b = document.createElement('button');
-    if(k===''){ b.style.visibility='hidden'; } else { b.textContent=k; b.setAttribute('aria-label', k==='⌫'?'Effacer':k); }
-    b.addEventListener('click', ()=> S.pinKeyPress(k));
-    grid.appendChild(b);
-  });
-};
-S.renderPinDots = function(){
-  const wrap = document.getElementById('pinDots'); wrap.innerHTML='';
-  for(let i=0;i<4;i++){ const d = document.createElement('span'); d.className='dot'+(i<S.pinBuffer.length?' filled':''); wrap.appendChild(d); }
-};
-S.pinKeyPress = async function(k){
-  if(Date.now() < S.lockUntil) return;
-  if(k==='⌫'){ S.pinBuffer = S.pinBuffer.slice(0,-1); S.renderPinDots(); return; }
-  if(k==='' || S.pinBuffer.length>=4) return;
-  S.pinBuffer += k; S.renderPinDots();
-  if(S.pinBuffer.length===4){
-    if(S.pinMode==='setup'){
-      if(!S.pinFirstEntry){ S.pinFirstEntry = S.pinBuffer; S.pinBuffer=''; S.renderPinDots();
-        document.getElementById('lockMsg').textContent = S.t('confirmPin');
-      } else {
-        if(S.pinFirstEntry===S.pinBuffer){
-          const {hash,salt} = await S.crypto.hashPin(S.pinFirstEntry);
-          await S.dbPut('security', {id:1, pinHash:hash, pinSalt:salt, autoLockMinutes:5, webauthnCredId:null});
-          S.security = {id:1, pinHash:hash, pinSalt:salt, autoLockMinutes:5};
-          S.toast(S.lang==='fr'?'Code PIN créé':'PIN created');
-          S.finishBoot();
-        } else {
-          S.pinFirstEntry=null; S.pinBuffer='';
-          document.getElementById('lockMsg').textContent = S.t('createPin');
-          S.toast(S.t('wrongPin'));
-        }
-      }
-    } else {
-      const ok = await S.crypto.verifyPin(S.pinBuffer, S.security.pinHash, S.security.pinSalt);
-      if(ok){ S.pinBuffer=''; S.failCount=0; S.showApp(); }
-      else {
-        S.failCount++; S.pinBuffer='';
-        const delay = Math.min(30, Math.pow(2,S.failCount));
-        S.lockUntil = Date.now() + delay*1000;
-        document.getElementById('lockMsg').textContent = S.t('wrongPin')+' — '+S.t('tryAgainIn').replace('{n}', delay);
-        setTimeout(()=>{ document.getElementById('lockMsg').textContent = S.t('lockEnterPin'); }, delay*1000);
-      }
-    }
-  }
-};
-S.showLockSetup = function(){
-  document.getElementById('screen-lock').classList.remove('hidden');
-  document.getElementById('screen-onboarding').classList.add('hidden');
-  document.getElementById('screen-splash').classList.add('hidden');
-  S.pinMode='setup'; S.pinBuffer=''; S.pinFirstEntry=null;
-  document.getElementById('lockMsg').textContent = S.t('createPin');
-  document.getElementById('btnBiometric').classList.add('hidden');
-  S.buildNumpad(); S.renderPinDots();
-};
-S.showLockVerify = function(){
-  document.getElementById('screen-lock').classList.remove('hidden');
-  document.getElementById('screen-onboarding').classList.add('hidden');
-  document.getElementById('screen-splash').classList.add('hidden');
-  document.getElementById('app').classList.add('hidden');
-  S.pinMode='verify'; S.pinBuffer='';
-  document.getElementById('lockMsg').textContent = S.t('lockEnterPin');
-  const canBio = window.PublicKeyCredential && S.security && S.security.webauthnCredId && window.isSecureContext;
-  document.getElementById('btnBiometric').classList.toggle('hidden', !canBio);
-  S.buildNumpad(); S.renderPinDots();
-};
-document.getElementById('btnBiometric').addEventListener('click', async ()=>{
-  try{
-    await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)), timeout:60000, userVerification:'required'}});
-    S.showApp();
-  }catch(e){ S.toast('WebAuthn: '+ (e.message||'échec')); }
-});
-
-/* ===================== ONBOARDING ===================== */
-S.onbIndex = 0;
-S.ONB_STEPS = [
-  {title:'onbWelcomeTitle', body:'onbWelcomeBody', icon:'heart'},
-  {title:'onbPrivacyTitle', body:'onbPrivacyBody', icon:'home'},
-  {title:'onbCycleTitle', body:'onbCycleBody', icon:'calendar'},
-  {title:'onbSecurityTitle', body:'onbSecurityBody', icon:'user'}
-];
-S.renderOnboarding = function(){
-  const step = S.ONB_STEPS[S.onbIndex];
-  const isLast = S.onbIndex === S.ONB_STEPS.length-1;
-  const dots = S.ONB_STEPS.map((_,i)=> `<span class="${i===S.onbIndex?'active':''}"></span>`).join('');
-  document.getElementById('onbContent').innerHTML = `
-    <div class="onb-illustr" style="color:var(--primary)">${svgIcon(step.icon).replace('<svg ', '<svg width="72" height="72" ')}</div>
-    <h2 style="text-align:center">${S.t(step.title)}</h2>
-    <p class="muted" style="text-align:center">${S.t(step.body)}</p>
-    <div class="progress-dots" style="justify-content:center">${dots}</div>
-    <div class="row" style="justify-content:space-between;margin-top:22px">
-      <button class="btn-ghost" id="onbSkip">${S.t('skip')}</button>
-      <button class="btn-primary" id="onbNext">${isLast ? S.t('start') : S.t('next')}</button>
-    </div>`;
-  document.getElementById('onbSkip').addEventListener('click', S.finishOnboarding);
-  document.getElementById('onbNext').addEventListener('click', ()=>{
-    if(isLast) S.finishOnboarding(); else { S.onbIndex++; S.renderOnboarding(); }
-  });
-};
-S.finishOnboarding = async function(){
-  await S.dbPut('profile', {id:1, onboarded:true, avgCycleLength:28, tempUnit:'C', createdAt:new Date().toISOString()});
-  S.showLockSetup();
-};
-
-/* ===================== BOOT ===================== */
-S.finishBoot = async function(){ await S.reloadAll(); S.showApp(); };
-S.showApp = function(){
-  document.getElementById('screen-splash').classList.add('hidden');
-  document.getElementById('screen-lock').classList.add('hidden');
-  document.getElementById('screen-onboarding').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-  const route = (window.location.hash||'#dashboard').slice(1) || 'dashboard';
-  S.navigate(route);
-  S.resetAutoLockTimer();
-};
-
-S.boot = async function(){
-  S.buildNav();
-  try{ await S.openDB(); } catch(e){ S.toast('IndexedDB indisponible'); }
-  const secArr = S.db ? await S.dbGetAll('security') : [];
-  S.security = secArr[0] || null;
-  const profArr = S.db ? await S.dbGetAll('profile') : [];
-  const profile = profArr[0] || null;
-  setTimeout(async ()=>{
-    if(!profile || !profile.onboarded){
-      document.getElementById('screen-splash').classList.add('hidden');
-      document.getElementById('screen-onboarding').classList.remove('hidden');
-      S.renderOnboarding();
-    } else if(!S.security){
-      document.getElementById('screen-splash').classList.add('hidden');
-      S.showLockSetup();
-    } else {
-      await S.reloadAll();
-      document.getElementById('screen-splash').classList.add('hidden');
-      S.showLockVerify();
-    }
-  }, 900);
-};
-
-/* Auto-lock */
-S.autoLockTimer = null;
-S.resetAutoLockTimer = function(){
-  clearTimeout(S.autoLockTimer);
-  const mins = (S.security && S.security.autoLockMinutes) || 5;
-  if(!mins || mins<=0) return;
-  S.autoLockTimer = setTimeout(()=> S.showLockVerify(), mins*60000);
-};
-['click','keydown','touchstart'].forEach(evt=> document.addEventListener(evt, ()=>{ if(!document.getElementById('app').classList.contains('hidden')) S.resetAutoLockTimer(); }));
-
-document.getElementById('btnThemeTop').addEventListener('click', ()=>{
-  const cur = localStorage.getItem('serena_theme')||'system';
-  const next = cur==='system' ? 'dark' : cur==='dark' ? 'light' : 'system';
-  localStorage.setItem('serena_theme', next); S.applyTheme();
-  S.toast((S.lang==='fr'?'Thème : ':'Theme: ') + S.t(next==='system'?'system':next));
-});
-
-/* ===================== CANVAS CHARTS ===================== */
-S.drawLineChart = function(canvas, points, opts){
-  opts = opts||{};
-  const dpr = window.devicePixelRatio||1;
-  const cssW = canvas.clientWidth||320, cssH = 160;
-  canvas.width = cssW*dpr; canvas.height = cssH*dpr;
-  const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr);
-  const styles = getComputedStyle(document.documentElement);
-  const ink = styles.getPropertyValue('--ink').trim()||'#172033';
-  const primary = opts.color || styles.getPropertyValue('--primary').trim()||'#7C3AED';
-  const border = styles.getPropertyValue('--border').trim()||'rgba(0,0,0,.1)';
-  ctx.clearRect(0,0,cssW,cssH);
-  if(!points.length){
-    ctx.fillStyle = ink; ctx.globalAlpha=.5; ctx.font='13px sans-serif'; ctx.fillText(S.t('noData'), 10, cssH/2); return;
-  }
-  const pad = 24;
-  const ys = points.map(p=>p.y);
-  let minY = Math.min(...ys), maxY = Math.max(...ys);
-  if(minY===maxY){ minY-=1; maxY+=1; }
-  const spanY = maxY-minY;
-  const stepX = points.length>1 ? (cssW-2*pad)/(points.length-1) : 0;
-  ctx.strokeStyle = border; ctx.lineWidth=1;
-  for(let i=0;i<=3;i++){ const y = pad + (cssH-2*pad)*i/3; ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(cssW-pad,y); ctx.stroke(); }
-  ctx.beginPath(); ctx.strokeStyle = primary; ctx.lineWidth=2.2; ctx.lineJoin='round';
-  points.forEach((p,i)=>{
-    const x = pad + i*stepX; const y = cssH-pad - (p.y-minY)/spanY*(cssH-2*pad);
-    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-  });
-  ctx.stroke();
-  ctx.fillStyle = primary;
-  points.forEach((p,i)=>{
-    const x = pad + i*stepX; const y = cssH-pad - (p.y-minY)/spanY*(cssH-2*pad);
-    ctx.beginPath(); ctx.arc(x,y,2.6,0,7); ctx.fill();
-  });
-  ctx.fillStyle = ink; ctx.globalAlpha=.6; ctx.font='11px sans-serif'; ctx.textAlign='left';
-  ctx.fillText(maxY.toFixed(1), 2, pad+4); ctx.fillText(minY.toFixed(1), 2, cssH-pad+2);
-  canvas.setAttribute('role','img');
-  canvas.setAttribute('aria-label', (opts.label||'Graphique') + ': ' + points.map(p=>p.y).join(', '));
-};
-
-/* ===================== VIEW ROUTER ===================== */
-S.renderView = function(){
-  const main = document.getElementById('mainView');
-  const r = S.state.route;
-  const fns = {
-    dashboard:S.viewDashboard, calendar:S.viewCalendar, tracking:S.viewTracking, fertility:S.viewFertility,
-    temperature:S.viewTemperature, journal:S.viewJournal, sexual:S.viewSexual, implant:S.viewImplant,
-    pregnancy:S.viewPregnancy, contractions:S.viewContractions, appointments:S.viewAppointments,
-    reminders:S.viewReminders, reports:S.viewReports, profile:S.viewProfile, settings:S.viewSettings,
-    security:S.viewSecurityPage, privacy:S.viewPrivacy, about:S.viewAbout, help:S.viewHelp
-  };
-  main.innerHTML = (fns[r] ? fns[r]() : '<div class="empty">404</div>');
-  S.afterRender && S.afterRender(r);
-};
-
-function emptyState(msg, actionLabel, onAction, id){
-  const btnId = id||('ea'+Math.random().toString(36).slice(2));
-  setTimeout(()=>{ const b=document.getElementById(btnId); if(b) b.addEventListener('click', onAction); },0);
-  return `<div class="empty"><p>${msg}</p>${actionLabel?`<button class="btn-primary" id="${btnId}">${actionLabel}</button>`:''}</div>`;
-}
-
-/* ===================== DASHBOARD ===================== */
-S.viewDashboard = function(){
-  const st = S.state;
-  const cd = S.calc.calculateCycleDay(st.periods, S.dt.todayISO());
-  const np = S.calc.predictNextPeriod(st.periods, st.settings.avgCycleLength);
-  const avg = S.calc.calculateAverageCycleLength(st.periods);
-  const fw = S.calc.estimateFertileWindow(st.periods, st.settings.avgCycleLength);
-  const lastTemp = [...st.temperatures].sort((a,b)=> S.dt.toSerial(b.date)-S.dt.toSerial(a.date))[0];
-  const todayReminders = st.reminders.filter(r=> r.enabled && r.date===S.dt.todayISO());
-  const nextAppt = [...st.appointments].filter(a=> S.dt.toSerial(a.date) >= S.dt.toSerial(S.dt.todayISO())).sort((a,b)=> S.dt.toSerial(a.date)-S.dt.toSerial(b.date))[0];
-  const implantHtml = st.implant ? (()=>{ const end = S.calc.calculateImplantEndDate(st.implant.insertionDate, st.implant.durationMonths);
-      const left = end ? S.dt.diffDays(S.dt.todayISO(), end) : null;
-      return `${end?S.dt.fmt(end):'—'}${left!=null?` (${left} j)`:''}`; })() : S.t('none');
-
-  let pregnancyCard = '';
-  if(st.isPregnant && st.pregnancy){
-    const w = S.calc.calculatePregnancyWeeks(st.pregnancy.lmpDate);
-    pregnancyCard = `<div class="card" style="margin-top:14px">
-      <div class="row" style="justify-content:space-between;align-items:center">
-        <strong>${S.t('pregnancyStatus')}</strong><span class="pill pill-violet">${w.weeks!=null?w.weeks+' SA':'—'}</span>
-      </div>
-      <p class="muted" style="margin:6px 0 0">${S.t('edd')}: ${S.dt.fmt(S.calc.calculateEDD(st.pregnancy.lmpDate, st.pregnancy.conceptionDate, st.pregnancy.providedEdd))}</p>
-    </div>`;
-  }
-
-  return `
-  <h1 class="section-title">SERENA</h1>
-  <div class="stat-grid">
-    <div class="card stat-card"><div class="muted">${S.t('cycleDay')}</div><div class="num">${cd.value ?? '—'}</div></div>
-    <div class="card stat-card"><div class="muted">${S.t('nextPeriod')}</div><div class="num" style="font-size:17px">${S.dt.fmt(np.date)}</div><span class="pill ${np.confidence==='high'?'pill-green':np.confidence==='medium'?'pill-violet':'pill-grey'}">${S.t('confidence'+(np.confidence==='high'?'High':np.confidence==='medium'?'Med':'Low'))}</span></div>
-    <div class="card stat-card"><div class="muted">${S.t('avgCycle')}</div><div class="num">${avg.value ?? '—'}${avg.value?' j':''}</div></div>
-    <div class="card stat-card"><div class="muted">${S.t('fertileWindow')}</div><div class="num" style="font-size:14px">${fw.start?S.dt.fmt(fw.start,false)+' – '+S.dt.fmt(fw.end,false):'—'}</div></div>
-  </div>
-  <div class="disclaimer" style="margin-top:12px">⚠️ ${S.t('fertilityWarning')}</div>
-  <div class="quick-actions">
-    <button data-qa="period">🩸<span>${S.t('qaPeriod')}</span></button>
-    <button data-qa="journal">📓<span>${S.t('qaJournal')}</span></button>
-    <button data-qa="temp">🌡️<span>${S.t('qaTemp')}</span></button>
-    <button data-qa="report">📄<span>${S.t('qaReport')}</span></button>
-    <button data-qa="symptoms">✚<span>${S.t('qaSymptoms')}</span></button>
-    <button data-qa="note">✎<span>${S.t('qaNote')}</span></button>
-  </div>
-  ${pregnancyCard}
-  <div class="card" style="margin-top:14px">
-    <div class="row" style="justify-content:space-between"><span class="muted">${S.t('implantStatus')}</span><strong>${implantHtml}</strong></div>
-    <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">${S.t('recentTemp')}</span><strong>${lastTemp?lastTemp.value+'°'+lastTemp.unit:'—'}</strong></div>
-    <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">${S.t('nextAppt')}</span><strong>${nextAppt?S.dt.fmt(nextAppt.date):'—'}</strong></div>
-    <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">${S.t('todayReminders')}</span><strong>${todayReminders.length}</strong></div>
-  </div>
-  <p class="muted" style="margin-top:16px">${S.t('medicalFooter')}</p>
-  `;
-};
-S.afterRender = function(route){
-  if(route==='dashboard'){
-    document.querySelectorAll('[data-qa]').forEach(b=> b.addEventListener('click', ()=>{
-      const map = {period:'period', journal:'journal', temp:'temperature', report:'reports', symptoms:'journal', note:'journal'};
-      S.navigate(map[b.dataset.qa]||'journal');
-      if(b.dataset.qa==='period') setTimeout(()=> S.openPeriodForm(), 50);
-      if(b.dataset.qa==='temp') setTimeout(()=> S.openTemperatureForm(), 50);
-      if(b.dataset.qa==='journal'||b.dataset.qa==='symptoms'||b.dataset.qa==='note') setTimeout(()=> S.openJournalForm(), 50);
-    }));
-  }
-  if(route==='calendar') S.mountCalendar();
-  if(route==='temperature') S.mountTemperature();
-  if(route==='journal') S.mountJournal();
-  if(route==='pregnancy') S.mountPregnancy();
-  if(route==='contractions') S.mountContractions();
-  if(route==='sexual' && S.afterRenderExtra_sexual) S.afterRenderExtra_sexual();
-  if(route==='implant' && S.afterRenderExtra_implant) S.afterRenderExtra_implant();
-};
-
-/* ===================== CALENDAR ===================== */
-S.calState = { y:new Date().getFullYear(), m:new Date().getMonth()+1 };
-S.viewCalendar = function(){
-  return `<h1 class="section-title">${S.t('navCalendar')}</h1><div id="calBody"></div>`;
-};
-S.mountCalendar = function(){ S.renderCalendarGrid(); };
-S.renderCalendarGrid = function(){
-  const body = document.getElementById('calBody'); if(!body) return;
-  const {y,m} = S.calState;
-  const first = new Date(Date.UTC(y,m-1,1));
-  const startDow = (first.getUTCDay()+6)%7; // Monday=0
-  const daysInMonth = new Date(Date.UTC(y,m,0)).getUTCDate();
-  const prevDays = new Date(Date.UTC(y,m-1,0)).getUTCDate();
-  const dows = S.lang==='fr' ? ['L','M','M','J','V','S','D'] : ['M','T','W','T','F','S','S'];
-  const st = S.state;
-  const fw = S.calc.estimateFertileWindow(st.periods, st.settings.avgCycleLength);
-  const ovu = S.calc.estimateOvulation(st.periods, st.settings.avgCycleLength);
-  const todayIso = S.dt.todayISO();
-
-  function dayInfo(iso){
-    const info = {period:false, fertile:false, ovu:false, log:false};
-    st.periods.forEach(p=>{ const s=S.dt.toSerial(p.startDate), e=p.endDate?S.dt.toSerial(p.endDate):s; const c=S.dt.toSerial(iso); if(c>=s&&c<=e) info.period=true; });
-    if(fw.start && iso>=fw.start && iso<=fw.end) info.fertile=true;
-    if(ovu.date===iso) info.ovu=true;
-    if(st.dailyLogs.some(l=>l.date===iso) || st.temperatures.some(t=>t.date===iso)) info.log=true;
-    return info;
-  }
-  let cells = '';
-  for(let i=0;i<startDow;i++){ const d = prevDays-startDow+1+i; cells += `<div class="cal-day out">${d}</div>`; }
-  for(let d=1; d<=daysInMonth; d++){
-    const iso = S.dt.toISO(y,m,d); const info = dayInfo(iso);
-    const dots = [info.period&&'<span class="dot-period"></span>', info.fertile&&'<span class="dot-fertile"></span>', info.ovu&&'<span class="dot-ovu"></span>', info.log&&'<span class="dot-log"></span>'].filter(Boolean).join('');
-    cells += `<button class="cal-day ${iso===todayIso?'today':''}" data-date="${iso}" aria-label="${iso}"><span>${d}</span><span class="dots">${dots}</span></button>`;
-  }
-  const totalCells = startDow+daysInMonth; const trailing = (7-(totalCells%7))%7;
-  for(let d=1; d<=trailing; d++){ cells += `<div class="cal-day out">${d}</div>`; }
-
-  body.innerHTML = `
-    <div class="cal-head">
-      <button class="btn-ghost" id="calPrev" aria-label="Mois précédent">←</button>
-      <strong>${S.dt.monthLabel(y,m)}</strong>
-      <button class="btn-ghost" id="calNext" aria-label="Mois suivant">→</button>
-    </div>
-    <div class="row" style="margin-bottom:8px"><button class="btn-secondary" id="calToday">${S.t('today')}</button>
-      <button class="btn-primary" id="calAddPeriod" style="margin-left:auto">${S.t('qaPeriod')}</button></div>
-    <div class="cal-grid">${dows.map(d=>`<div class="cal-dow">${d}</div>`).join('')}${cells}</div>
-    <div class="row muted" style="gap:14px;margin-top:12px;font-size:12px">
-      <span><span class="dot-period" style="display:inline-block;width:8px;height:8px;border-radius:50%"></span> ${S.t('periods')}</span>
-      <span><span class="dot-fertile" style="display:inline-block;width:8px;height:8px;border-radius:50%"></span> ${S.t('fertileWindow')}</span>
-      <span><span class="dot-ovu" style="display:inline-block;width:8px;height:8px;border-radius:50%"></span> ${S.t('ovulation')}</span>
-      <span><span class="dot-log" style="display:inline-block;width:8px;height:8px;border-radius:50%"></span> ${S.t('navJournal')}</span>
-    </div>
-    <div class="disclaimer" style="margin-top:12px">⚠️ ${S.t('fertilityWarning')}</div>
-  `;
-  document.getElementById('calPrev').addEventListener('click', ()=>{ S.calState.m--; if(S.calState.m<1){S.calState.m=12;S.calState.y--;} S.renderCalendarGrid(); });
-  document.getElementById('calNext').addEventListener('click', ()=>{ S.calState.m++; if(S.calState.m>12){S.calState.m=1;S.calState.y++;} S.renderCalendarGrid(); });
-  document.getElementById('calToday').addEventListener('click', ()=>{ const n=new Date(); S.calState={y:n.getFullYear(),m:n.getMonth()+1}; S.renderCalendarGrid(); });
-  document.getElementById('calAddPeriod').addEventListener('click', ()=> S.openPeriodForm());
-  body.querySelectorAll('.cal-day[data-date]').forEach(c=> c.addEventListener('click', ()=> S.openDayPanel(c.dataset.date)));
-};
-
-S.openDayPanel = function(iso){
-  const st = S.state;
-  const log = st.dailyLogs.find(l=>l.date===iso);
-  const temp = st.temperatures.find(t=>t.date===iso);
-  const period = st.periods.find(p=> iso>=p.startDate && iso<=(p.endDate||p.startDate));
-  const body = `
-    <p class="muted">${S.dt.fmt(iso)}</p>
-    <div class="row" style="flex-direction:column;gap:8px">
-      <div class="card">${S.t('periods')}: ${period? '✔️' : S.t('none')}</div>
-      <div class="card">${S.t('navTemperature')}: ${temp? temp.value+'°'+temp.unit : S.t('none')}</div>
-      <div class="card">${S.t('navJournal')}: ${log? `${S.t('mood')} ${log.mood??'—'}, ${S.t('pain')} ${log.pain??'—'}` : S.t('none')}</div>
-    </div>
-    <div class="row" style="margin-top:14px">
-      <button class="btn-secondary" id="dpPeriod">${S.t('qaPeriod')}</button>
-      <button class="btn-secondary" id="dpTemp">${S.t('qaTemp')}</button>
-      <button class="btn-secondary" id="dpJournal">${S.t('qaJournal')}</button>
-    </div>`;
-  const ov = S.openSheet(S.dt.fmt(iso), body);
-  ov.querySelector('#dpPeriod').addEventListener('click', ()=>{ ov.remove(); S.openPeriodForm(iso); });
-  ov.querySelector('#dpTemp').addEventListener('click', ()=>{ ov.remove(); S.openTemperatureForm(iso); });
-  ov.querySelector('#dpJournal').addEventListener('click', ()=>{ ov.remove(); S.openJournalForm(iso); });
-};
-
-S.openPeriodForm = function(dateIso){
-  const d = dateIso || S.dt.todayISO();
-  const body = `
-    <label>${S.t('startDate')}</label><input type="date" id="pfStart" value="${d}">
-    <label>${S.t('endDate')} (${S.t('none')})</label><input type="date" id="pfEnd">
-    <label>${S.t('flow')}</label><select id="pfFlow"><option value="light">${S.lang==='fr'?'Léger':'Light'}</option><option value="medium" selected>${S.lang==='fr'?'Moyen':'Medium'}</option><option value="heavy">${S.lang==='fr'?'Abondant':'Heavy'}</option><option value="spotting">${S.t('spotting')}</option></select>
-    <label>${S.t('notes')}</label><textarea id="pfNotes" rows="2"></textarea>
-    <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn-primary" id="pfSave">${S.t('save')}</button></div>`;
-  const ov = S.openSheet(S.t('qaPeriod'), body);
-  ov.querySelector('#pfSave').addEventListener('click', async ()=>{
-    const start = ov.querySelector('#pfStart').value; const end = ov.querySelector('#pfEnd').value || null;
-    if(!start){ S.toast('Date requise'); return; }
-    await S.dbAdd('periods', {startDate:start, endDate:end, flow:ov.querySelector('#pfFlow').value, notes:ov.querySelector('#pfNotes').value});
-    await S.reloadAll(); ov.remove(); S.toast(S.lang==='fr'?'Enregistré':'Saved'); S.renderView();
-  });
-};
-
-/* ===================== TRACKING HUB ===================== */
-S.viewTracking = function(){
-  const items = [
-    {route:'fertility', label:'navFertility', icon:'💜'}, {route:'temperature', label:'navTemperature', icon:'🌡️'},
-    {route:'journal', label:'navJournal', icon:'📓'}, {route:'sexual', label:'navSexual', icon:'💞'},
-    {route:'implant', label:'navImplant', icon:'💊'}, {route:'appointments', label:'navAppointments', icon:'📅'},
-    {route:'reminders', label:'navReminders', icon:'🔔'}, {route:'reports', label:'navReports', icon:'📄'}
-  ];
-  return `<h1 class="section-title">${S.t('navTracking')}</h1>
-  <div class="settings-list">${items.map(i=>`<button data-go="${i.route}"><span>${i.icon} ${S.t(i.label)}</span><span>›</span></button>`).join('')}</div>`;
-};
-
-/* ===================== FERTILITY ===================== */
-S.viewFertility = function(){
-  const st = S.state;
-  const fw = S.calc.estimateFertileWindow(st.periods, st.settings.avgCycleLength);
-  const ovu = S.calc.estimateOvulation(st.periods, st.settings.avgCycleLength);
-  return `<h1 class="section-title">${S.t('navFertility')}</h1>
-  <div class="card">
-    <div class="row" style="justify-content:space-between"><span class="muted">${S.t('fertileWindow')}</span><span class="pill pill-green">${fw.start?S.dt.fmt(fw.start,false)+' – '+S.dt.fmt(fw.end,false):'—'}</span></div>
-    <div class="row" style="justify-content:space-between;margin-top:8px"><span class="muted">${S.t('ovulation')}</span><span class="pill pill-violet">${ovu.date?S.dt.fmt(ovu.date):'—'}</span></div>
-  </div>
-  <p class="muted" style="margin-top:10px">${S.t('ovulationNote')}</p>
-  <div class="disclaimer" style="margin-top:12px">⚠️ ${S.t('fertilityWarning')}</div>
-  ${!st.periods.length ? emptyState(S.t('noData'), S.t('qaPeriod'), ()=> S.openPeriodForm(), 'goPeriodFert') : ''}
-  `;
-};
-
-document.addEventListener('click', (e)=>{ const b = e.target.closest('[data-go]'); if(b) S.navigate(b.dataset.go); });
-
-/* ===================== TEMPERATURE ===================== */
-S.viewTemperature = function(){
-  return `<h1 class="section-title">${S.t('navTemperature')}</h1>
-  <div class="row" style="margin-bottom:10px"><button class="btn-primary" id="tAddBtn">${S.t('add')}</button></div>
-  <div class="card"><div class="chart-wrap"><canvas class="chart" id="tempChart"></canvas></div></div>
-  <div id="tempAnalysis" class="muted" style="margin-top:8px"></div>
-  <div id="tempHistWrap" style="margin-top:14px"></div>`;
-};
-S.mountTemperature = function(){
-  document.getElementById('tAddBtn').addEventListener('click', ()=> S.openTemperatureForm());
-  const temps = [...S.state.temperatures].sort((a,b)=> S.dt.toSerial(a.date)-S.dt.toSerial(b.date));
-  S.drawLineChart(document.getElementById('tempChart'), temps.map(t=>({x:t.date,y:t.value})), {label:S.t('navTemperature')});
-  const an = S.calc.analyzeBasalTemperature(temps);
-  document.getElementById('tempAnalysis').textContent = an.rise ? '↑ '+S.t('ovulationNote') : '';
-  const hist = [...temps].reverse().slice(0,20);
-  document.getElementById('tempHistWrap').innerHTML = hist.length ? `<table class="hist"><tr><th>${S.t('date')}</th><th>°</th><th>${S.t('notes')}</th></tr>${hist.map(t=>`<tr><td>${S.dt.fmt(t.date)}</td><td>${t.value}°${t.unit}</td><td>${t.note||''}</td></tr>`).join('')}</table>` : emptyState(S.t('noData'));
-};
-S.openTemperatureForm = function(dateIso){
-  const d = dateIso || S.dt.todayISO();
-  const body = `<label>${S.t('date')}</label><input type="date" id="tfDate" value="${d}">
-    <label>${S.t('time')}</label><input type="time" id="tfTime" value="07:00">
-    <div class="grid2"><div><label>${S.lang==='fr'?'Valeur':'Value'}</label><input type="number" step="0.01" id="tfVal" value="36.5"></div>
-    <div><label>${S.lang==='fr'?'Unité':'Unit'}</label><select id="tfUnit"><option value="C">°C</option><option value="F">°F</option></select></div></div>
-    <label>${S.lang==='fr'?'Méthode':'Method'}</label><select id="tfMethod"><option value="oral">${S.lang==='fr'?'Orale':'Oral'}</option><option value="vaginal">${S.lang==='fr'?'Vaginale':'Vaginal'}</option><option value="basal">${S.lang==='fr'?'Basale':'Basal'}</option></select>
-    <label>${S.t('notes')}</label><textarea id="tfNote" rows="2"></textarea>
-    <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn-primary" id="tfSave">${S.t('save')}</button></div>`;
-  const ov = S.openSheet(S.t('navTemperature'), body);
-  ov.querySelector('#tfSave').addEventListener('click', async ()=>{
-    await S.dbAdd('temperatures', {date:ov.querySelector('#tfDate').value, time:ov.querySelector('#tfTime').value,
-      value:parseFloat(ov.querySelector('#tfVal').value), unit:ov.querySelector('#tfUnit').value,
-      method:ov.querySelector('#tfMethod').value, note:ov.querySelector('#tfNote').value});
-    await S.reloadAll(); ov.remove(); S.toast(S.lang==='fr'?'Enregistré':'Saved'); S.renderView();
-  });
-};
-
-/* ===================== JOURNAL ===================== */
-S.journalMetric = 'mood'; S.journalRange = 30;
-S.viewJournal = function(){
-  const metrics = ['mood','pain','energy','sleep','libido'];
-  return `<h1 class="section-title">${S.t('navJournal')}</h1>
-  <div class="row" style="margin-bottom:10px"><button class="btn-primary" id="jAddBtn">${S.t('add')}</button></div>
-  <div class="row" style="margin-bottom:8px">${metrics.map(m=>`<button data-metric="${m}" class="btn-secondary" style="${S.journalMetric===m?'border-color:var(--primary);color:var(--primary))':''}">${S.t(m)}</button>`).join('')}</div>
-  <div class="row" style="margin-bottom:8px">${[7,30,90,180,365].map(n=>`<button data-range="${n}" class="btn-ghost" style="${S.journalRange===n?'color:var(--primary);font-weight:700':''}">${n}j</button>`).join('')}</div>
-  <div class="card"><div class="chart-wrap"><canvas class="chart" id="journalChart"></canvas></div></div>
-  <div id="journalHistWrap" style="margin-top:14px"></div>`;
-};
-S.mountJournal = function(){
-  document.getElementById('jAddBtn').addEventListener('click', ()=> S.openJournalForm());
-  document.querySelectorAll('[data-metric]').forEach(b=> b.addEventListener('click', ()=>{ S.journalMetric=b.dataset.metric; S.renderView(); }));
-  document.querySelectorAll('[data-range]').forEach(b=> b.addEventListener('click', ()=>{ S.journalRange=parseInt(b.dataset.range); S.renderView(); }));
-  const cutoff = S.dt.addDays(S.dt.todayISO(), -S.journalRange);
-  const logs = S.state.dailyLogs.filter(l=> l.date>=cutoff).sort((a,b)=> S.dt.toSerial(a.date)-S.dt.toSerial(b.date));
-  S.drawLineChart(document.getElementById('journalChart'), logs.filter(l=>l[S.journalMetric]!=null).map(l=>({x:l.date,y:l[S.journalMetric]})), {label:S.t(S.journalMetric)});
-  const hist = [...logs].reverse().slice(0,20);
-  document.getElementById('journalHistWrap').innerHTML = hist.length ? `<table class="hist"><tr><th>${S.t('date')}</th><th>${S.t('mood')}</th><th>${S.t('pain')}</th><th>${S.t('symptoms')}</th></tr>${hist.map(l=>`<tr><td>${S.dt.fmt(l.date)}</td><td>${l.mood??'—'}</td><td>${l.pain??'—'}</td><td>${(l.symptoms||[]).join(', ')||'—'}</td></tr>`).join('')}</table>` : emptyState(S.t('noData'));
-};
-S.SYMPTOMS = ['crampes','migraine','seins','ballonnements','nausees','fatigue','lombaires','pertes','autre'];
-S.SYMPTOM_LABELS = {fr:{crampes:'Crampes',migraine:'Migraine',seins:'Seins sensibles',ballonnements:'Ballonnements',nausees:'Nausées',fatigue:'Fatigue',lombaires:'Douleurs lombaires',pertes:'Pertes',autre:'Autre'},
-  en:{crampes:'Cramps',migraine:'Migraine',seins:'Tender breasts',ballonnements:'Bloating',nausees:'Nausea',fatigue:'Fatigue',lombaires:'Lower back pain',pertes:'Discharge',autre:'Other'}};
-S.openJournalForm = function(dateIso){
-  const d = dateIso || S.dt.todayISO();
-  const sliders = ['mood','pain','energy','sleep','libido'].map(k=>{
-    const max = k==='pain'?5:(k==='mood'?5:10);
-    return `<label>${S.t(k)}</label><input type="range" min="0" max="${max}" value="${Math.round(max/2)}" id="jf_${k}">`;
-  }).join('');
-  const symptomsHtml = S.SYMPTOMS.map(s=> `<label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" value="${s}" class="jf-symptom" style="width:auto"> ${S.SYMPTOM_LABELS[S.lang][s]}</label>`).join('');
-  const body = `<label>${S.t('date')}</label><input type="date" id="jfDate" value="${d}">
-    ${sliders}
-    <label>${S.t('flow')}</label><select id="jfFlow"><option value="">${S.t('none')}</option><option value="light">${S.lang==='fr'?'Léger':'Light'}</option><option value="medium">${S.lang==='fr'?'Moyen':'Medium'}</option><option value="heavy">${S.lang==='fr'?'Abondant':'Heavy'}</option></select>
-    <label>${S.t('symptoms')}</label><div class="row" style="flex-direction:column;gap:4px">${symptomsHtml}</div>
-    <label>${S.t('notes')}</label><textarea id="jfNotes" rows="2"></textarea>
-    <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn-primary" id="jfSave">${S.t('save')}</button></div>`;
-  const ov = S.openSheet(S.t('navJournal'), body);
-  ov.querySelector('#jfSave').addEventListener('click', async ()=>{
-    const symptoms = [...ov.querySelectorAll('.jf-symptom:checked')].map(c=>c.value);
-    await S.dbAdd('dailyLogs', {date:ov.querySelector('#jfDate').value, mood:+ov.querySelector('#jf_mood').value,
-      pain:+ov.querySelector('#jf_pain').value, energy:+ov.querySelector('#jf_energy').value, sleep:+ov.querySelector('#jf_sleep').value,
-      libido:+ov.querySelector('#jf_libido').value, flow:ov.querySelector('#jfFlow').value||null, symptoms, notes:ov.querySelector('#jfNotes').value});
-    await S.reloadAll(); ov.remove(); S.toast(S.lang==='fr'?'Enregistré':'Saved'); S.renderView();
-  });
-};
-
-/* ===================== SEXUAL ACTIVITY ===================== */
-S.viewSexual = function(){
-  const st = S.state;
-  const hist = [...st.sexualActivity].sort((a,b)=> S.dt.toSerial(b.date)-S.dt.toSerial(a.date)).slice(0,30);
-  return `<h1 class="section-title">${S.t('navSexual')}</h1>
-  <p class="disclaimer">⚠️ ${S.t('sexualWarning')}</p>
-  <div class="row" style="margin:10px 0"><button class="btn-primary" id="saAddBtn">${S.t('add')}</button></div>
-  ${hist.length? `<table class="hist"><tr><th>${S.t('date')}</th><th>${S.lang==='fr'?'Protégé':'Protected'}</th><th>${S.t('notes')}</th></tr>${hist.map(a=>`<tr><td>${S.dt.fmt(a.date)}</td><td>${a.protected?'✔️':'—'}</td><td>${a.notes||''}</td></tr>`).join('')}</table>` : emptyState(S.t('noData'))}
-  `;
-};
-S.afterRenderExtra_sexual = function(){ const b=document.getElementById('saAddBtn'); if(b) b.addEventListener('click', ()=> S.openSexualForm()); };
-S.openSexualForm = function(){
-  const body = `<label>${S.t('date')}</label><input type="date" id="sfDate" value="${S.dt.todayISO()}">
-    <label style="display:flex;align-items:center;gap:8px;font-weight:400"><input type="checkbox" id="sfProtected" style="width:auto"> ${S.lang==='fr'?'Rapport protégé':'Protected intercourse'}</label>
-    <label>${S.lang==='fr'?'Contraception':'Contraception'}</label><input type="text" id="sfContra" placeholder="${S.lang==='fr'?'ex: préservatif, pilule':'e.g. condom, pill'}">
-    <label>${S.t('notes')} (${S.lang==='fr'?'facultatif':'optional'})</label><textarea id="sfNotes" rows="2"></textarea>
-    <p class="disclaimer">⚠️ ${S.t('sexualWarning')}</p>
-    <div class="row" style="justify-content:flex-end"><button class="btn-primary" id="sfSave">${S.t('save')}</button></div>`;
-  const ov = S.openSheet(S.t('navSexual'), body);
-  ov.querySelector('#sfSave').addEventListener('click', async ()=>{
-    await S.dbAdd('sexualActivity', {date:ov.querySelector('#sfDate').value, protected:ov.querySelector('#sfProtected').checked,
-      contraception:ov.querySelector('#sfContra').value, notes:ov.querySelector('#sfNotes').value});
-    await S.reloadAll(); ov.remove(); S.toast(S.lang==='fr'?'Enregistré':'Saved'); S.renderView();
-  });
-};
-
-/* ===================== IMPLANT ===================== */
-S.viewImplant = function(){
-  const imp = S.state.implant;
-  const end = imp ? S.calc.calculateImplantEndDate(imp.insertionDate, imp.durationMonths) : null;
-  const left = end ? S.dt.diffDays(S.dt.todayISO(), end) : null;
-  return `<h1 class="section-title">${S.t('navImplant')}</h1>
-  ${imp ? `<div class="card">
-      <div class="row" style="justify-content:space-between"><strong>${imp.name||imp.type}</strong><span class="pill pill-violet">${left!=null?left+' j':'—'}</span></div>
-      <p class="muted">${S.lang==='fr'?'Posé le':'Inserted'} ${S.dt.fmt(imp.insertionDate)} · ${S.lang==='fr'?'Fin estimée':'Estimated end'} ${S.dt.fmt(end)}</p>
-      <p class="disclaimer">⚠️ ${S.t('implantWarning')}</p>
-      <button class="btn-secondary" id="impEdit">${S.t('edit')}</button>
-    </div>` : emptyState(S.t('noData'), S.t('add'), ()=>S.openImplantForm(), 'impAdd')}
-  `;
-};
-S.afterRenderExtra_implant = function(){
-  const e=document.getElementById('impEdit'); if(e) e.addEventListener('click', ()=> S.openImplantForm(S.state.implant));
-};
-S.openImplantForm = function(existing){
-  const i = existing||{};
-  const body = `<label>${S.lang==='fr'?'Type':'Type'}</label><input type="text" id="ifType" value="${i.type||''}" placeholder="Nexplanon...">
-    <label>${S.lang==='fr'?'Nom commercial':'Brand name'}</label><input type="text" id="ifName" value="${i.name||''}">
-    <label>${S.t('startDate')}</label><input type="date" id="ifDate" value="${i.insertionDate||S.dt.todayISO()}">
-    <label>${S.lang==='fr'?'Durée (mois)':'Duration (months)'}</label><input type="number" id="ifDur" value="${i.durationMonths||36}">
-    <label>${S.lang==='fr'?'Bras de pose':'Arm'}</label><select id="ifArm"><option value="left" ${i.arm==='left'?'selected':''}>${S.lang==='fr'?'Gauche':'Left'}</option><option value="right" ${i.arm==='right'?'selected':''}>${S.lang==='fr'?'Droit':'Right'}</option></select>
-    <label>${S.t('professional')} (${S.lang==='fr'?'facultatif':'optional'})</label><input type="text" id="ifProv" value="${i.provider||''}">
-    <label>${S.t('notes')}</label><textarea id="ifNotes" rows="2">${i.notes||''}</textarea>
-    <p class="disclaimer">⚠️ ${S.t('implantWarning')}</p>
-    <div class="row" style="justify-content:flex-end"><button class="btn-primary" id="ifSave">${S.t('save')}</button></div>`;
-  const ov = S.openSheet(S.t('navImplant'), body);
-  ov.querySelector('#ifSave').addEventListener('click', async ()=>{
-    const obj = {id: i.id||1, type:ov.querySelector('#ifType').value, name:ov.querySelector('#ifName').value,
-      insertionDate:ov.querySelector('#ifDate').value, durationMonths:+ov.querySelector('#ifDur').value,
-      arm:ov.querySelector('#ifArm').value, provider:ov.querySelector('#ifProv').value, notes:ov.querySelector('#ifNotes').value};
-    obj.expectedEndDate = S.calc.calculateImplantEndDate(obj.insertionDate, obj.durationMonths);
-    await S.dbPut('implant', obj);
-    await S.reloadAll(); ov.remove(); S.toast(S.lang==='fr'?'Enregistré':'Saved'); S.renderView();
-  });
-};
-
-/* ===================== PREGNANCY ===================== */
-S.viewPregnancy = function(){
-  const p = S.state.pregnancy;
-  if(!p){
-    return `<h1 class="section-title">${S.t('navPregnancy')}</h1>
-      ${emptyState(S.t('noData'), S.t('add'), ()=>S.openPregnancyForm(), 'pregAdd')}`;
-  }
-  const w = S.calc.calculatePregnancyWeeks(p.lmpDate);
-  const edd = S.calc.calculateEDD(p.lmpDate, p.conceptionDate, p.providedEdd);
-  const tri = S.calc.calculateTrimester(w.weeks);
-  const pct = w.weeks!=null ? Math.min(100, Math.round(w.weeks/40*100)) : 0;
-  const milestones = [
-    {w:12, label: S.lang==='fr'?'Fin du 1er trimestre':'End of 1st trimester'},
-    {w:20, label: S.lang==='fr'?'Échographie morphologique (repère)':'Anatomy scan (typical timing)'},
-    {w:27, label: S.lang==='fr'?'Début du 3e trimestre':'Start of 3rd trimester'},
-    {w:37, label: S.lang==='fr'?'Terme atteint (repère)':'Full term (typical marker)'}
-  ];
-  const logs = S.state.dailyLogs.filter(l=>l.pregnancyLog).sort((a,b)=>S.dt.toSerial(b.date)-S.dt.toSerial(a.date));
-  return `<h1 class="section-title">${S.t('navPregnancy')}</h1>
-  <div class="card">
-    <div class="row" style="justify-content:space-between;align-items:center">
-      <span class="num" style="font-size:30px;font-family:var(--font-head)">${w.weeks!=null?w.weeks+' SA + '+w.days+'j':'—'}</span>
-      <span class="pill pill-violet">${S.t('trimester')} ${tri||'—'}</span>
-    </div>
-    <div style="background:var(--border);border-radius:99px;height:8px;margin-top:10px"><div style="width:${pct}%;background:var(--primary);height:8px;border-radius:99px"></div></div>
-    <p class="muted" style="margin-top:8px">${S.t('edd')}: ${S.dt.fmt(edd)}</p>
-  </div>
-  <h2 style="margin-top:18px;font-size:16px">${S.lang==='fr'?'Jalons':'Milestones'}</h2>
-  <div class="timeline">${milestones.map(m=>`<div class="tl-item"><strong>${m.w} SA</strong> — ${m.label} ${w.weeks!=null && w.weeks>=m.w?'✔️':''}</div>`).join('')}</div>
-  <div class="row" style="margin-top:14px">
-    <button class="btn-secondary" id="pregJournalBtn">${S.lang==='fr'?'Journal grossesse':'Pregnancy journal'}</button>
-    <button class="btn-secondary" id="pregEditBtn">${S.t('edit')}</button>
-    <button class="btn-ghost" id="pregEndBtn">${S.lang==='fr'?'Terminer le suivi':'End tracking'}</button>
-  </div>
-  ${logs.length? `<h2 style="margin-top:18px;font-size:16px">${S.lang==='fr'?'Journal récent':'Recent journal'}</h2><table class="hist"><tr><th>${S.t('date')}</th><th>${S.t('mood')}</th><th>${S.t('weight')}</th></tr>${logs.slice(0,10).map(l=>`<tr><td>${S.dt.fmt(l.date)}</td><td>${l.mood??'—'}</td><td>${l.weight??'—'}</td></tr>`).join('')}</table>` : ''}
-  <p class="muted" style="margin-top:14px">${S.t('medicalFooter')}</p>`;
-};
-S.mountPregnancy = function(){
-  const e = document.getElementById('pregEditBtn'); if(e) e.addEventListener('click', ()=> S.openPregnancyForm(S.state.pregnancy));
-  const j = document.getElementById('pregJournalBtn'); if(j) j.addEventListener('click', ()=> S.openPregnancyJournalForm());
-  const end = document.getElementById('pregEndBtn'); if(end) end.addEventListener('click', ()=>{
-    S.confirmDialog(S.lang==='fr'?'Terminer le suivi de grossesse ?':'End pregnancy tracking?', S.t('deleteAllWarn'), async ()=>{
-      const p = S.state.pregnancy; p.active=false; await S.dbPut('pregnancy', p); await S.reloadAll(); S.renderView();
-    });
-  });
-};
-S.openPregnancyForm = function(existing){
-  const p = existing||{};
-  const body = `<label>${S.t('lmp')}</label><input type="date" id="pgLmp" value="${p.lmpDate||''}">
-    <label>${S.t('conception')}</label><input type="date" id="pgConc" value="${p.conceptionDate||''}">
-    <label>${S.t('providedEdd')}</label><input type="date" id="pgEdd" value="${p.providedEdd||''}">
-    <p class="disclaimer">⚠️ ${S.lang==='fr'?'Ces calculs sont des estimations et ne constituent pas un diagnostic médical.':'These calculations are estimates and are not a medical diagnosis.'}</p>
-    <div class="row" style="justify-content:flex-end"><button class="btn-primary" id="pgSave">${S.t('save')}</button></div>`;
-  const ov = S.openSheet(S.t('navPregnancy'), body);
-  ov.querySelector('#pgSave').addEventListener('click', async ()=>{
-    const obj = {id:p.id||1, active:true, lmpDate:ov.querySelector('#pgLmp').value||null,
-      conceptionDate:ov.querySelector('#pgConc').value||null, providedEdd:ov.querySelector('#pgEdd').value||null};
-    if(!obj.lmpDate && !obj.conceptionDate && !obj.providedEdd){ S.toast(S.lang==='fr'?'Renseignez au moins une date':'Enter at least one date'); return; }
-    await S.dbPut('pregnancy', obj); await S.reloadAll(); ov.remove(); S.toast(S.lang==='fr'?'Enregistré':'Saved'); S.renderView();
-  });
-};
-S.openPregnancyJournalForm = function(){
-  const body = `<label>${S.t('date')}</label><input type="date" id="pjDate" value="${S.dt.todayISO()}">
-    <label>${S.t('mood')}</label><input type="range" min="1" max="5" value="3" id="pjMood">
-    <label>${S.t('energy')}</label><input type="range" min="0" max="10" value="5" id="pjEnergy">
-    <label>${S.t('sleep')}</label><input type="range" min="0" max="10" value="5" id="pjSleep">
-    <label>${S.t('weight')} (kg)</label><input type="number" step="0.1" id="pjWeight">
-    <label>${S.t('notes')}</label><textarea id="pjNotes" rows="2"></textarea>
-    <div class="row" style="justify-content:flex-end"><button class="btn-primary" id="pjSave">${S.t('save')}</button></div>`;
-  const ov = S.openSheet(S.lang==='fr'?'Journal grossesse':'Pregnancy journal', body);
-  ov.querySelector('#pjSave').addEventListener('click', async ()=>{
-    await S.dbAdd('dailyLogs', {date:ov.querySelector('#pjDate').value, pregnancyLog:true, mood:+ov.querySelector('#pjMood').value,
-      energy:+ov.querySelector('#pjEnergy').value, sleep:+ov.querySelector('#pjSleep').value,
-      weight: ov.querySelector('#pjWeight').value?+ov.querySelector('#pjWeight').value:null, notes:ov.querySelector('#pjNotes').value});
-    await S.reloadAll(); ov.remove(); S.toast(S.lang==='fr'?'Enregistré':'Saved'); S.renderView();
-  });
-};
-
-/* ===================== CONTRACTIONS ===================== */
-S.contractionActive = null;
-S.viewContractions = function(){
-  const list = [...S.state.contractions].sort((a,b)=> new Date(b.start)-new Date(a.start)).slice(0,15);
-  const lastInterval = S.calc.calculateContractionInterval(S.state.contractions);
-  return `<h1 class="section-title">${S.t('navContractions')}</h1>
-  <div class="card" style="text-align:center">
-    <div class="timer-num" id="ctTimerNum">00:00</div>
-    <button class="timer-btn" id="ctBtn" style="background:${S.contractionActive?'var(--danger)':'var(--primary)'}">${S.contractionActive?S.t('contractionEnd'):S.t('contractionStart')}</button>
-    ${lastInterval?`<p class="muted" style="margin-top:10px">${S.t('interval')}: ${Math.round(lastInterval/60)} min</p>`:''}
-  </div>
-  <div style="margin-top:16px">${list.length? `<table class="hist"><tr><th>${S.t('date')}</th><th>${S.t('duration')}</th></tr>${list.map(c=>`<tr><td>${new Date(c.start).toLocaleString()}</td><td>${c.duration?Math.round(c.duration)+'s':'—'}</td></tr>`).join('')}</table>` : emptyState(S.t('noData'))}</div>
-  <p class="muted" style="margin-top:10px">${S.lang==='fr'?'Ce chronomètre ne diagnostique pas le travail.':'This timer does not diagnose labor.'}</p>`;
-};
-S.ctInterval = null;
-S.mountContractions = function(){
-  const btn = document.getElementById('ctBtn');
-  btn.addEventListener('click', async ()=>{
-    if(!S.contractionActive){
-      S.contractionActive = {start: new Date().toISOString()};
-      S.ctTick0 = Date.now();
-      S.ctInterval = setInterval(()=>{
-        const sec = Math.floor((Date.now()-S.ctTick0)/1000);
-        const el = document.getElementById('ctTimerNum'); if(el) el.textContent = `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
-      }, 500);
-      S.renderView();
-    } else {
-      clearInterval(S.ctInterval);
-      const end = new Date().toISOString();
-      const duration = (new Date(end)-new Date(S.contractionActive.start))/1000;
-      await S.dbAdd('contractions', {start:S.contractionActive.start, end, duration});
-      S.contractionActive = null;
-      await S.reloadAll(); S.renderView();
-    }
-  });
-};
-
-/* ===================== APPOINTMENTS ===================== */
-S.viewAppointments = function(){
-  const list = [...S.state.appointments].sort((a,b)=> S.dt.toSerial(a.date)-S.dt.toSerial(b.date));
-  return `<h1 class="section-title">${S.t('navAppointments')}</h1>
-  <div class="row" style="margin-bottom:10px"><button class="btn-primary" id="apAddBtn">${S.t('add')}</button></div>
-  ${list.length? list.map(a=>`<div class="card" style="margin-bottom:8px"><div class="row" style="justify-content:space-between"><strong>${S.dt.fmt(a.date)} ${a.time||''}</strong><span class="pill pill-violet">${a.type||''}</span></div><p class="muted">${a.professional||''} ${a.facility?'· '+a.facility:''}</p></div>`).join('') : emptyState(S.t('noData'))}`;
-};
-document.addEventListener('click', (e)=>{ if(e.target.id==='apAddBtn') S.openAppointmentForm(); });
-S.openAppointmentForm = function(){
-  const types = ['consultation','echographie','examen','suivi','implant','autre'];
-  const labels = S.lang==='fr'? {consultation:'Consultation',echographie:'Échographie',examen:'Examen',suivi:'Suivi grossesse',implant:'Implant',autre:'Autre'} : {consultation:'Consultation',echographie:'Ultrasound',examen:'Exam',suivi:'Pregnancy follow-up',implant:'Implant',autre:'Other'};
-  const body = `<label>${S.t('date')}</label><input type="date" id="apDate" value="${S.dt.todayISO()}">
-    <label>${S.t('time')}</label><input type="time" id="apTime">
-    <label>${S.t('professional')}</label><input type="text" id="apProf">
-    <label>${S.t('facility')}</label><input type="text" id="apFac">
-    <label>${S.t('type')}</label><select id="apType">${types.map(t=>`<option value="${t}">${labels[t]}</option>`).join('')}</select>
-    <label>${S.t('notes')}</label><textarea id="apNotes" rows="2"></textarea>
-    <div class="row" style="justify-content:flex-end"><button class="btn-primary" id="apSave">${S.t('save')}</button></div>`;
-  const ov = S.openSheet(S.t('navAppointments'), body);
-  ov.querySelector('#apSave').addEventListener('click', async ()=>{
-    await S.dbAdd('appointments', {date:ov.querySelector('#apDate').value, time:ov.querySelector('#apTime').value,
-      professional:ov.querySelector('#apProf').value, facility:ov.querySelector('#apFac').value,
-      type:ov.querySelector('#apType').value, notes:ov.querySelector('#apNotes').value});
-    await S.reloadAll(); ov.remove(); S.toast(S.lang==='fr'?'Enregistré':'Saved'); S.renderView();
-  });
-};
-
-/* ===================== REMINDERS ===================== */
-S.viewReminders = function(){
-  const list = S.state.reminders;
-  return `<h1 class="section-title">${S.t('navReminders')}</h1>
-  <div class="row" style="margin-bottom:10px"><button class="btn-primary" id="rmAddBtn">${S.t('add')}</button></div>
-  ${list.length? list.map(r=>`<div class="card" style="margin-bottom:8px"><div class="row" style="justify-content:space-between;align-items:center"><span>${r.type} — ${S.dt.fmt(r.date)} ${r.time||''}</span><button class="toggle ${r.enabled?'on':''}" data-toggle-rem="${r.id}"><span></span></button></div></div>`).join('') : emptyState(S.t('noData'))}`;
-};
-document.addEventListener('click', async (e)=>{
-  if(e.target.id==='rmAddBtn') S.openReminderForm();
-  const t = e.target.closest('[data-toggle-rem]');
-  if(t){ const id = +t.dataset.toggleRem; const r = S.state.reminders.find(x=>x.id===id); r.enabled=!r.enabled; await S.dbPut('reminders', r); await S.reloadAll(); S.renderView(); }
-});
-S.openReminderForm = function(){
-  const body = `<label>${S.t('type')}</label><select id="rmType"><option value="regles">${S.t('periods')}</option><option value="temperature">${S.t('navTemperature')}</option><option value="journal">${S.t('navJournal')}</option><option value="implant">${S.t('navImplant')}</option><option value="rdv">${S.t('navAppointments')}</option><option value="grossesse">${S.t('navPregnancy')}</option></select>
-    <label>${S.t('date')}</label><input type="date" id="rmDate" value="${S.dt.todayISO()}">
-    <label>${S.t('time')}</label><input type="time" id="rmTime" value="09:00">
-    <div class="row" style="justify-content:flex-end"><button class="btn-primary" id="rmSave">${S.t('save')}</button></div>`;
-  const ov = S.openSheet(S.t('navReminders'), body);
-  ov.querySelector('#rmSave').addEventListener('click', async ()=>{
-    await S.dbAdd('reminders', {type:ov.querySelector('#rmType').value, date:ov.querySelector('#rmDate').value,
-      time:ov.querySelector('#rmTime').value, enabled:true, privacyLevel:'discreet'});
-    await S.reloadAll(); ov.remove(); S.toast(S.lang==='fr'?'Enregistré':'Saved'); S.renderView();
-    if(window.Notification && Notification.permission==='default') Notification.requestPermission();
-  });
-};
-
-/* ===================== REPORTS / EXPORT / IMPORT / PRINT ===================== */
-S.viewReports = function(){
-  return `<h1 class="section-title">${S.t('navReports')}</h1>
-  <div class="settings-list">
-    <button id="repPdf">📄 ${S.t('exportPdf')}</button>
-    <button id="repExport">⬇️ ${S.t('exportData')}</button>
-    <button id="repImport">⬆️ ${S.t('importData')}</button>
-  </div>
-  <input type="file" id="repImportFile" accept="application/json" class="hidden">
-  <p class="muted" style="margin-top:12px">${S.t('medicalFooter')}</p>`;
-};
-document.addEventListener('click', (e)=>{
-  if(e.target.id==='repPdf') S.openDoctorModeSheet();
-  if(e.target.id==='repExport') S.exportJSON();
-  if(e.target.id==='repImport') document.getElementById('repImportFile') && document.getElementById('repImportFile').click();
-});
-document.addEventListener('change', async (e)=>{
-  if(e.target.id==='repImportFile'){
-    const file = e.target.files[0]; if(!file) return;
-    const text = await file.text();
-    try{
-      const data = JSON.parse(text);
-      if(!data.__serena__){ S.toast(S.lang==='fr'?'Fichier invalide':'Invalid file'); return; }
-      S.confirmDialog(S.lang==='fr'?'Importer les données':'Import data', S.lang==='fr'?'Fusionner avec les données existantes ?':'Merge with existing data?', async ()=>{
-        for(const store of S.STORES){ if(data[store]) for(const item of data[store]){ const {id, ...rest} = item; await S.dbAdd(store, rest); } }
-        await S.reloadAll(); S.toast(S.lang==='fr'?'Import réussi':'Import successful'); S.renderView();
-      });
-    }catch(err){ S.toast(S.lang==='fr'?'JSON invalide':'Invalid JSON'); }
-  }
-});
-S.exportJSON = async function(){
-  const data = {__serena__:true, version:1, exportedAt:new Date().toISOString()};
-  for(const store of S.STORES){ data[store] = await S.dbGetAll(store); }
-  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download = `serena-export-${S.dt.todayISO()}.json`; a.click();
-  URL.revokeObjectURL(url);
-  S.toast(S.lang==='fr'?'Export terminé':'Export complete');
-};
-S.openDoctorModeSheet = function(){
-  const cats = [['cycle','periods'],['temperature','temperatures'],['journal','dailyLogs'],['sexual','sexualActivity'],['implant','implant'],['pregnancy','pregnancy'],['contractions','contractions'],['appointments','appointments']];
-  const labels = {cycle:S.t('periods'),temperature:S.t('navTemperature'),journal:S.t('navJournal'),sexual:S.t('navSexual'),implant:S.t('navImplant'),pregnancy:S.t('navPregnancy'),contractions:S.t('navContractions'),appointments:S.t('navAppointments')};
-  const body = `<p class="muted">${S.lang==='fr'?'Sélectionnez les données à inclure dans le rapport imprimable.':'Choose which data to include in the printable report.'}</p>
-  <div style="display:flex;flex-direction:column;gap:6px">${cats.map(([key])=> `<label style="display:flex;align-items:center;gap:8px;font-weight:400"><input type="checkbox" class="dm-cat" value="${key}" style="width:auto"> ${labels[key]}</label>`).join('')}</div>
-  <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn-primary" id="dmGo">${S.t('exportPdf')}</button></div>`;
-  const ov = S.openSheet(S.lang==='fr'?'Mode médecin':'Doctor mode', body);
-  ov.querySelector('#dmGo').addEventListener('click', ()=>{
-    const selected = [...ov.querySelectorAll('.dm-cat:checked')].map(c=>c.value);
-    ov.remove(); S.buildPrintReport(selected);
-  });
-};
-S.buildPrintReport = function(selected){
-  const st = S.state;
-  let html = `<div style="padding:24px;font-family:Georgia,serif;max-width:760px;margin:0 auto">
-    <h1 style="margin-bottom:0">SERENA — ${S.lang==='fr'?'Suivi personnel de santé':'Personal health tracking'}</h1>
-    <p style="color:#555">${S.lang==='fr'?'Rapport généré le':'Report generated on'} ${new Date().toLocaleDateString()}</p>
-    <p style="font-size:13px;font-style:italic">${S.lang==='fr'?"Document généré à partir des données saisies par l'utilisatrice. Ce document ne constitue pas un diagnostic médical.":"Document generated from data entered by the user. This document is not a medical diagnosis."}</p>`;
-  if(selected.includes('cycle')){
-    const avg = S.calc.calculateAverageCycleLength(st.periods);
-    html += `<h2>${S.t('periods')}</h2><p>${S.t('avgCycle')}: ${avg.value??'—'} j</p>`;
-    html += `<table border="1" cellpadding="4" style="border-collapse:collapse;width:100%"><tr><th>${S.t('startDate')}</th><th>${S.t('endDate')}</th><th>${S.t('flow')}</th></tr>${st.periods.map(p=>`<tr><td>${p.startDate}</td><td>${p.endDate||''}</td><td>${p.flow||''}</td></tr>`).join('')}</table>`;
-  }
-  if(selected.includes('temperature')){
-    html += `<h2>${S.t('navTemperature')}</h2><table border="1" cellpadding="4" style="border-collapse:collapse;width:100%"><tr><th>${S.t('date')}</th><th>°</th></tr>${st.temperatures.map(t=>`<tr><td>${t.date}</td><td>${t.value}°${t.unit}</td></tr>`).join('')}</table>`;
-  }
-  if(selected.includes('journal')){
-    html += `<h2>${S.t('navJournal')}</h2><table border="1" cellpadding="4" style="border-collapse:collapse;width:100%"><tr><th>${S.t('date')}</th><th>${S.t('mood')}</th><th>${S.t('pain')}</th><th>${S.t('symptoms')}</th></tr>${st.dailyLogs.map(l=>`<tr><td>${l.date}</td><td>${l.mood??''}</td><td>${l.pain??''}</td><td>${(l.symptoms||[]).join(', ')}</td></tr>`).join('')}</table>`;
-  }
-  if(selected.includes('sexual')){
-    html += `<h2>${S.t('navSexual')}</h2><p style="font-size:12px">${S.t('sexualWarning')}</p><table border="1" cellpadding="4" style="border-collapse:collapse;width:100%"><tr><th>${S.t('date')}</th><th>${S.lang==='fr'?'Protégé':'Protected'}</th></tr>${st.sexualActivity.map(a=>`<tr><td>${a.date}</td><td>${a.protected?'✔':'—'}</td></tr>`).join('')}</table>`;
-  }
-  if(selected.includes('implant') && st.implant){
-    html += `<h2>${S.t('navImplant')}</h2><p>${st.implant.name||st.implant.type} — ${S.dt.fmt(st.implant.insertionDate)} → ${S.dt.fmt(S.calc.calculateImplantEndDate(st.implant.insertionDate, st.implant.durationMonths))}</p>`;
-  }
-  if(selected.includes('pregnancy') && st.pregnancy){
-    const w = S.calc.calculatePregnancyWeeks(st.pregnancy.lmpDate);
-    html += `<h2>${S.t('navPregnancy')}</h2><p>${w.weeks??'—'} SA — ${S.t('edd')}: ${S.dt.fmt(S.calc.calculateEDD(st.pregnancy.lmpDate, st.pregnancy.conceptionDate, st.pregnancy.providedEdd))}</p>`;
-  }
-  if(selected.includes('contractions')){
-    html += `<h2>${S.t('navContractions')}</h2><table border="1" cellpadding="4" style="border-collapse:collapse;width:100%"><tr><th>${S.lang==='fr'?'Début':'Start'}</th><th>${S.t('duration')}</th></tr>${st.contractions.map(c=>`<tr><td>${new Date(c.start).toLocaleString()}</td><td>${c.duration?Math.round(c.duration)+'s':''}</td></tr>`).join('')}</table>`;
-  }
-  if(selected.includes('appointments')){
-    html += `<h2>${S.t('navAppointments')}</h2><table border="1" cellpadding="4" style="border-collapse:collapse;width:100%"><tr><th>${S.t('date')}</th><th>${S.t('type')}</th><th>${S.t('professional')}</th></tr>${st.appointments.map(a=>`<tr><td>${a.date}</td><td>${a.type||''}</td><td>${a.professional||''}</td></tr>`).join('')}</table>`;
-  }
-  html += `<p style="margin-top:24px;font-size:12px;color:#555">${S.t('medicalFooter')}</p></div>`;
-  document.getElementById('print-report').innerHTML = html;
-  setTimeout(()=> window.print(), 200);
-};
-
-/* ===================== PROFILE ===================== */
-S.viewProfile = function(){
-  const p = S.state.profile||{};
-  return `<h1 class="section-title">${S.t('navProfile')}</h1>
-  <label>${S.lang==='fr'?'Prénom / pseudonyme (facultatif)':'First name / nickname (optional)'}</label><input type="text" id="prName" value="${p.name||''}">
-  <label>${S.lang==='fr'?'Année de naissance (facultative)':'Birth year (optional)'}</label><input type="date" id="prYear" value="${p.birthYear||''}">
-  <label>${S.t('avgCycle')} (${S.lang==='fr'?'par défaut':'default'})</label><input type="number" id="prCycle" value="${S.state.settings.avgCycleLength||28}">
-  <label>${S.lang==='fr'?'Unité de température':'Temperature unit'}</label><select id="prUnit"><option value="C" ${S.state.settings.tempUnit==='C'?'selected':''}>°C</option><option value="F" ${S.state.settings.tempUnit==='F'?'selected':''}>°F</option></select>
-  <div class="row" style="margin-top:12px"><button class="btn-primary" id="prSave">${S.t('save')}</button></div>`;
-};
-document.addEventListener('click', async (e)=>{
-  if(e.target.id==='prSave'){
-    const p = S.state.profile||{id:1, onboarded:true};
-    p.name = document.getElementById('prName').value; p.birthYear = document.getElementById('prYear').value||null;
-    await S.dbPut('profile', p);
-    const set = S.state.settings; set.avgCycleLength = +document.getElementById('prCycle').value||28; set.tempUnit = document.getElementById('prUnit').value;
-    await S.dbPut('settings', set);
-    await S.reloadAll(); S.toast(S.lang==='fr'?'Enregistré':'Saved');
-  }
-});
-
-/* ===================== SETTINGS ===================== */
-S.viewSettings = function(){
-  return `<h1 class="section-title">${S.t('navSettings')}</h1>
-  <div class="settings-list">
-    <button data-go="profile">👤 ${S.t('navProfile')}</button>
-    <button id="setAppearance">🎨 ${S.t('appearance')}</button>
-    <button id="setLanguage">🌐 ${S.t('language')}</button>
-    <button data-go="security">🔒 ${S.t('security')}</button>
-    <button id="setData">💾 ${S.t('data')}</button>
-    <button data-go="privacy">🛡️ ${S.t('navPrivacy')}</button>
-    <button data-go="about">ℹ️ ${S.t('about')}</button>
-    <button data-go="help">❓ ${S.t('help')}</button>
-    <button id="setDebug">🧪 ${S.t('statusPage')}</button>
-  </div>`;
-};
-document.addEventListener('click', (e)=>{
-  if(e.target.id==='setAppearance') S.openAppearanceSheet();
-  if(e.target.id==='setLanguage') S.openLanguageSheet();
-  if(e.target.id==='setData') S.openDataSheet();
-  if(e.target.id==='setDebug') S.openDebugSheet();
-});
-S.openAppearanceSheet = function(){
-  const cur = localStorage.getItem('serena_theme')||'system';
-  const body = `<div class="row" style="flex-direction:column;gap:8px">
-    ${['light','dark','system'].map(v=>`<button class="btn-secondary" data-theme-choice="${v}" style="${cur===v?'border-color:var(--primary);color:var(--primary)':''}">${S.t(v)}</button>`).join('')}
-  </div>`;
-  const ov = S.openSheet(S.t('appearance'), body);
-  ov.querySelectorAll('[data-theme-choice]').forEach(b=> b.addEventListener('click', ()=>{
-    localStorage.setItem('serena_theme', b.dataset.themeChoice); S.applyTheme(); ov.remove();
-  }));
-};
-S.openLanguageSheet = function(){
-  const body = `<div class="row" style="flex-direction:column;gap:8px">
-    <button class="btn-secondary" data-lang-choice="fr" style="${S.lang==='fr'?'border-color:var(--primary);color:var(--primary)':''}">Français</button>
-    <button class="btn-secondary" data-lang-choice="en" style="${S.lang==='en'?'border-color:var(--primary);color:var(--primary)':''}">English</button>
-  </div>`;
-  const ov = S.openSheet(S.t('language'), body);
-  ov.querySelectorAll('[data-lang-choice]').forEach(b=> b.addEventListener('click', ()=>{
-    S.lang = b.dataset.langChoice; localStorage.setItem('serena_lang', S.lang); ov.remove(); S.buildNav(); S.renderView();
-  }));
-};
-S.openDataSheet = function(){
-  const body = `<div class="settings-list">
-    <button id="dsDemo">🧪 ${S.t('loadDemo')}</button>
-    <button id="dsClearDemo">🧹 ${S.t('clearDemo')}</button>
-    <button id="dsExport">⬇️ ${S.t('exportData')}</button>
-    <button id="dsDeleteAll" style="color:var(--danger)">🗑️ ${S.t('deleteAllTitle')}</button>
-  </div>`;
-  const ov = S.openSheet(S.t('data'), body);
-  ov.querySelector('#dsDemo').addEventListener('click', async ()=>{ await S.loadDemoData(); ov.remove(); S.toast(S.lang==='fr'?'Données de démo chargées':'Demo data loaded'); S.renderView(); });
-  ov.querySelector('#dsClearDemo').addEventListener('click', async ()=>{ await S.clearDemoData(); ov.remove(); S.toast(S.lang==='fr'?'Données de démo effacées':'Demo data cleared'); S.renderView(); });
-  ov.querySelector('#dsExport').addEventListener('click', ()=> S.exportJSON());
-  ov.querySelector('#dsDeleteAll').addEventListener('click', ()=>{
-    ov.remove();
-    S.confirmDialog(S.t('deleteAllTitle'), S.t('deleteAllWarn'), ()=>{
-      S.confirmDialog(S.t('deleteAllTitle'), S.t('deleteAllWarn')+' '+(S.lang==='fr'?'Confirmez une seconde fois.':'Confirm a second time.'), async ()=>{
-        await S.dbClearAll(); localStorage.removeItem('serena_theme'); localStorage.removeItem('serena_lang');
-        S.toast(S.lang==='fr'?'Toutes les données ont été supprimées':'All data deleted');
-        setTimeout(()=> window.location.reload(), 700);
-      });
-    });
-  });
-};
-S.openDebugSheet = async function(){
-  const results = await S.runSelfTests();
-  const body = `<table class="hist"><tr><th>${S.lang==='fr'?'Test':'Test'}</th><th>${S.lang==='fr'?'Résultat':'Result'}</th></tr>
-    ${results.map(r=>`<tr><td>${r.name}</td><td>${r.ok?'✅':'❌ '+(r.error||'')}</td></tr>`).join('')}</table>
-    <h3 style="margin-top:14px;font-size:14px">${S.t('statusPage')}</h3>
-    <table class="hist">
-      <tr><td>IndexedDB</td><td>${'indexedDB' in window?'✅':'❌'}</td></tr>
-      <tr><td>Web Crypto</td><td>${window.crypto&&crypto.subtle?'✅':'❌'}</td></tr>
-      <tr><td>WebAuthn</td><td>${window.PublicKeyCredential?'✅':'❌'}</td></tr>
-      <tr><td>Notification API</td><td>${'Notification' in window?'✅':'❌'}</td></tr>
-      <tr><td>Service Worker</td><td>${'serviceWorker' in navigator?'✅':'❌'}</td></tr>
-      <tr><td>HTTPS/secure context</td><td>${window.isSecureContext?'✅':'❌'}</td></tr>
-      <tr><td>${S.lang==='fr'?'Installable':'Installable'}</td><td>${S.deferredInstallPrompt?'✅':'—'}</td></tr>
-    </table>`;
-  S.openSheet(S.t('statusPage'), body);
-};
-S.runSelfTests = async function(){
-  const tests = [];
-  try{ const r = S.calc.predictNextPeriod([{startDate:'2026-01-01'},{startDate:'2026-01-29'}], 28); tests.push({name:'predictNextPeriod', ok: !!r.date}); }catch(e){ tests.push({name:'predictNextPeriod', ok:false, error:e.message}); }
-  try{ const {hash,salt} = await S.crypto.hashPin('1234'); const ok = await S.crypto.verifyPin('1234', hash, salt); tests.push({name:'crypto PIN', ok}); }catch(e){ tests.push({name:'crypto PIN', ok:false, error:e.message}); }
-  try{ await S.dbAdd('settings', {__test:true}); tests.push({name:'IndexedDB write', ok:true}); }catch(e){ tests.push({name:'IndexedDB write', ok:false, error:e.message}); }
-  try{ const iso = S.dt.addDays('2026-01-31', 1); tests.push({name:'date add (no TZ drift)', ok: iso==='2026-02-01'}); }catch(e){ tests.push({name:'date', ok:false, error:e.message}); }
-  try{ const end = S.calc.calculateImplantEndDate('2026-01-31', 1); tests.push({name:'implant end date', ok: !!end}); }catch(e){ tests.push({name:'implant end date', ok:false, error:e.message}); }
-  return tests;
-};
-
-/* ===================== STATIC PAGES ===================== */
-S.viewSecurityPage = function(){
-  return `<h1 class="section-title">${S.t('navSecurity')}</h1>
-  <div class="card"><p>${S.lang==='fr'?"SERENA protège l'accès à vos données avec un code PIN à 4 chiffres, dérivé et haché avec PBKDF2 (Web Crypto API) — le PIN n'est jamais stocké en clair.":"SERENA protects access to your data with a 4-digit PIN, derived and hashed with PBKDF2 (Web Crypto API) — the PIN is never stored in plain text."}</p>
-  <p>${S.lang==='fr'?'La biométrie (WebAuthn) est proposée en complément lorsque votre navigateur/appareil la supporte, avec le PIN comme solution de repli.':'Biometrics (WebAuthn) are offered as a complement when your browser/device supports it, with the PIN as a fallback.'}</p>
-  <label>${S.t('enableAutoLock')}</label><select id="secAutoLock">
-    ${[[0,S.t('never')],[1,'1 min'],[5,'5 min'],[15,'15 min'],[30,'30 min']].map(([v,l])=>`<option value="${v}" ${S.security&&S.security.autoLockMinutes===v?'selected':''}>${l}</option>`).join('')}
-  </select>
-  <button class="btn-secondary" id="secChangePin" style="margin-top:12px">${S.lang==='fr'?'Changer le code PIN':'Change PIN'}</button>
-  </div>`;
-};
-document.addEventListener('change', async (e)=>{
-  if(e.target.id==='secAutoLock'){
-    S.security.autoLockMinutes = +e.target.value; await S.dbPut('security', S.security); S.resetAutoLockTimer();
-    S.toast(S.lang==='fr'?'Enregistré':'Saved');
-  }
-});
-document.addEventListener('click', (e)=>{
-  if(e.target.id==='secChangePin'){ S.showLockSetup(); document.getElementById('app').classList.add('hidden'); }
-});
-S.viewPrivacy = function(){
-  return `<h1 class="section-title">${S.t('navPrivacy')}</h1>
-  <div class="card"><p>${S.lang==='fr'?"Toutes vos données de santé sont stockées localement sur votre appareil, dans une base IndexedDB nommée SERENA_DB. Aucune donnée n'est envoyée automatiquement vers un serveur, il n'y a aucun outil d'analyse, ni publicité, ni traçage.":"All your health data is stored locally on your device, in an IndexedDB database named SERENA_DB. No data is automatically sent to a server; there is no analytics, advertising, or tracking."}</p>
-  <p>${S.lang==='fr'?'Vous pouvez exporter vos données au format JSON à tout moment, ou tout supprimer définitivement depuis Paramètres → Données.':'You can export your data as JSON at any time, or permanently delete everything from Settings → Data.'}</p></div>`;
-};
-S.viewAbout = function(){
-  return `<h1 class="section-title">${S.t('navAbout')}</h1>
-  <div class="card"><p><strong>SERENA</strong> — ${S.t('tagline')}</p>
-  <p>${S.lang==='fr'?"SERENA est un outil de suivi personnel et d'information sur le cycle, la fertilité et la grossesse.":"SERENA is a personal tracking and information tool for cycle, fertility and pregnancy."}</p>
-  <p class="disclaimer">⚠️ ${S.lang==='fr'?'SERENA ne diagnostique aucune maladie, ne confirme aucune grossesse ni ovulation, ne garantit aucune période sans risque et ne remplace pas un professionnel de santé.':'SERENA does not diagnose any condition, does not confirm pregnancy or ovulation, does not guarantee any risk-free period, and does not replace a healthcare professional.'}</p>
-  <h3 style="font-size:14px">${S.t('seeWhenConsult')}</h3><p class="muted">${S.t('consultList')}</p></div>`;
-};
-S.viewHelp = function(){
-  return `<h1 class="section-title">${S.t('navHelp')}</h1>
-  <div class="card"><p>${S.lang==='fr'?"Naviguez via les onglets (bas sur mobile, gauche sur ordinateur). Le tableau de bord résume votre cycle et vos rappels. Le calendrier affiche vos règles, fenêtre fertile estimée et ovulation potentielle. Chaque module (température, journal, activité, implant, grossesse) permet d'ajouter et consulter vos données.":"Navigate with the tabs (bottom on mobile, left on desktop). The dashboard summarizes your cycle and reminders. The calendar shows periods, estimated fertile window and potential ovulation. Each module (temperature, journal, activity, implant, pregnancy) lets you add and review data."}</p>
-  <p>${S.lang==='fr'?'Toutes les estimations sont clairement identifiées comme telles et ne remplacent jamais un avis médical.':'All estimates are clearly labeled as such and never replace medical advice.'}</p></div>`;
-};
-
-/* ===================== DEMO DATA ===================== */
-S.loadDemoData = async function(){
-  const today = S.dt.todayISO();
-  for(let i=3;i>=0;i--){ await S.dbAdd('periods', {startDate:S.dt.addDays(today, -28*i-2), endDate:S.dt.addDays(today,-28*i+3), flow:'medium', notes:'[DEMO]'}); }
-  for(let i=0;i<10;i++){ await S.dbAdd('temperatures', {date:S.dt.addDays(today,-i), time:'07:00', value:+(36.4+(i>6?0.3:0)+Math.random()*0.1).toFixed(2), unit:'C', method:'basal', note:'[DEMO]'}); }
-  for(let i=0;i<10;i++){ await S.dbAdd('dailyLogs', {date:S.dt.addDays(today,-i), mood:1+Math.floor(Math.random()*5), pain:Math.floor(Math.random()*3), energy:Math.floor(Math.random()*10), sleep:Math.floor(Math.random()*10), libido:Math.floor(Math.random()*10), symptoms:['fatigue'], notes:'[DEMO]'}); }
-  await S.dbAdd('sexualActivity', {date:S.dt.addDays(today,-5), protected:true, notes:'[DEMO]'});
-  await S.dbPut('implant', {id:1, type:'Implant', name:'DEMO-implant', insertionDate:S.dt.addDays(today,-200), durationMonths:36, arm:'left', notes:'[DEMO]'});
-  await S.dbAdd('appointments', {date:S.dt.addDays(today,10), time:'10:00', professional:'Dr Demo', facility:'Clinique Demo', type:'consultation', notes:'[DEMO]'});
-  S.state.settings.demoLoaded = true;
-};
-S.clearDemoData = async function(){
-  for(const store of ['periods','temperatures','dailyLogs','sexualActivity','appointments']){
-    const all = await S.dbGetAll(store);
-    for(const item of all){ if(item.notes==='[DEMO]') await S.dbDelete(store, item.id); }
-  }
-  const imp = await S.dbGetAll('implant'); if(imp[0] && imp[0].notes==='[DEMO]') await S.dbClear('implant');
-  await S.reloadAll();
-};
-
-/* ===================== PWA: MANIFEST + SERVICE WORKER + INSTALL ===================== */
-S.deferredInstallPrompt = null;
-window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); S.deferredInstallPrompt = e; });
-S.setupPWA = function(){
-  try{
-    const manifest = {
-      name:'SERENA', short_name:'SERENA', start_url:'.', display:'standalone',
-      background_color:'#F8FAFC', theme_color:'#7C3AED',
-      icons:[{src:S.iconDataURI(), sizes:'192x192', type:'image/svg+xml'}]
-    };
-    const blob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('link'); link.rel='manifest'; link.href=url; document.head.appendChild(link);
-  }catch(e){}
-  if('serviceWorker' in navigator && window.isSecureContext){
-    try{
-      const swCode = `self.addEventListener('install',e=>self.skipWaiting()); self.addEventListener('activate',e=>self.clients.claim()); self.addEventListener('fetch', e=>{});`;
-      const blob = new Blob([swCode], {type:'text/javascript'});
-      const url = URL.createObjectURL(blob);
-      navigator.serviceWorker.register(url).catch(()=>{ /* silently ignore: Blob SW registration may be disallowed */ });
-    }catch(e){}
-  }
-};
-S.iconDataURI = function(){
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='34' fill='none' stroke='%237C3AED' stroke-width='9'/><circle cx='62' cy='42' r='24' fill='%23F8FAFC'/></svg>`;
-  return 'data:image/svg+xml,'+svg;
-};
-
-/* ===================== INITIALIZATION ===================== */
-document.addEventListener('DOMContentLoaded', ()=>{
-  S.setupPWA();
-  S.boot();
-});
-</script>
+<script src="./assets/js/app.js"></script>
 </body>
 </html>

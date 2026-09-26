@@ -154,12 +154,12 @@ php -S localhost:8000
 ```
 
 Avec XAMPP, démarrer Apache puis ouvrir
-<http://localhost/serena/serena.html>. Avec les autres serveurs, ouvrir
-<http://localhost:8000/serena.html>.
+<http://localhost/serena/index.html>. Avec les autres serveurs, ouvrir
+<http://localhost:8000/index.html>.
 
 ### Option 3 — Hébergement statique
 
-Déployer `serena.html` sur n'importe quel hébergeur statique (Netlify, Vercel,
+Déployer `index.html` sur n'importe quel hébergeur statique (Netlify, Vercel,
 GitHub Pages, Cloudflare Pages, etc.). Aucun backend requis.
 
 **Pour bénéficier de la PWA complète**, servir en **HTTPS** (obligatoire pour
@@ -222,7 +222,7 @@ dates cohérentes, températures 34–42 °C, PIN 4 chiffres, bornes physiologiq
 
 | Sujet | Choix | Justification |
 |---|---|---|
-| **Distribution** | Application mono-fichier `serena.html`, accompagnée du manifeste, du service worker et des icônes | Portabilité, aucun build |
+| **Distribution** | Application mono-fichier `index.html`, accompagnée du manifeste, du service worker et des icônes | Portabilité, aucun build |
 | **Dépendances** | Aucune | Zéro CDN, zéro framework, zéro tracking |
 | **Stockage** | IndexedDB (+ fallback localStorage) | Structuré, scalable, transactionnel |
 | **PIN** | PBKDF2 150k itérations + sel 16 octets | Standard OWASP 2023 |
@@ -273,7 +273,7 @@ S.boot                           // Démarrage
 ## Structure du fichier
 
 ```
-serena.html
+index.html
 ├── <head>
 │   ├── <meta> (SEO, PWA, theme-color)
 │   ├── <link rel="icon"> (icônes dans assets/)
@@ -333,9 +333,9 @@ serena.html
 
 ### Reconstruire le fichier
 
-Le fichier `serena.html` est assemblé à partir de 7 blocs. Pour modifier :
+Le fichier `index.html` est assemblé à partir de 7 blocs. Pour modifier :
 
-1. Éditer le fichier `serena.html` directement (mono-fichier)
+1. Éditer le fichier `index.html` directement (mono-fichier)
 2. Ou maintenir les 7 blocs dans des fichiers séparés et les concaténer
 
 ### Lancer les auto-tests
@@ -372,7 +372,7 @@ Le fichier `serena.html` est assemblé à partir de 7 blocs. Pour modifier :
 
 ### PWA
 
-`serena.html` référence `manifest.json` et enregistre `sw.js` depuis le même
+`index.html` référence `manifest.json` et enregistre `sw.js` depuis le même
 répertoire. Le service worker met en cache la page, le manifeste et les icônes.
 Il nécessite un contexte sécurisé : HTTPS en production ou `localhost` en
 local. L'ouverture via `file://` ne permet pas au navigateur de charger ces
@@ -453,7 +453,7 @@ Ouvrir une issue avec le label `enhancement`.
 
 1. Forker le dépôt
 2. Créer une branche (`feature/ma-fonctionnalite`)
-3. Respecter le style existant (voir `serena.html`)
+3. Respecter le style existant (voir `index.html`)
 4. Tester sur Chrome + Firefox + Safari
 5. Lancer les auto-tests
 6. Ouvrir la PR avec description claire

@@ -299,7 +299,7 @@ En cas de désaccord, discuter dans les commentaires, ne pas forcer
 ### Principes généraux
 Aucune dépendance externe — vanilla JS uniquement
 
-Application mono-fichier `serena.html` avec ressources PWA statiques
+Application mono-fichier `index.html` avec ressources PWA statiques
 
 ES2020 minimum (optional chaining, nullish coalescing autorisés)
 

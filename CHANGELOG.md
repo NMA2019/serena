@@ -8,12 +8,12 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ### Modifié
 
-- Découpage et modularisation de `serena.html` : extraction des styles vers `styles.css` et de la logique applicative vers `app.js`.
+- Découpage et modularisation de `index.html` : extraction des styles vers `styles.css` et de la logique applicative vers `app.js`.
 - Mise à jour du Service Worker `sw.js` (cache `serena-v1.2.2`, version 3) pour pré-cacher `styles.css` et `app.js` dans l'App Shell offline.
 
 ### Corrigé
 
-- La page `serena.html` utilise le manifeste et le service worker statiques du dépôt.
+- La page `index.html` utilise le manifeste et le service worker statiques du dépôt.
 - Les chemins du manifeste, du cache hors-ligne et des icônes correspondent aux fichiers présents.
 - Les icônes PWA utilisent les PNG de `assets/`.
 
