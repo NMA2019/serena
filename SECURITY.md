@@ -1,6 +1,3 @@
-
----
-
 ## Notre engagement
 
 SERENA traite des **données de santé intimes** (cycle menstruel, fertilité,
